@@ -1,0 +1,37 @@
+{
+  "project_info": {
+    "project_number": "238002367713",
+    "project_id": "tys-attendance",
+    "storage_bucket": "tys-attendance.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238002367713:android:909968f5e3bd4cb0481ba0",
+        "android_client_info": {
+          "package_name": "com.tys.eattendanceapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVTzTY85Vp6u2i2YYCwLc2Sfu0ZSQCTn8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "238002367713-cq1dbtt5qm9dnv0trmaf6kujqod2ffn0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tys.iostest"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
