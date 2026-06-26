@@ -198,7 +198,7 @@ class AttendanceSummaryCard extends StatelessWidget {
         Text(
           value,
 
-          style: AppTheme.textStyle(size: 16, weight: FontWeight.w600),
+          style: AppTheme.textStyle(size: 12, weight: FontWeight.w600),
         ),
 
         Text(
