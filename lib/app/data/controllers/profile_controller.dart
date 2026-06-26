@@ -91,6 +91,8 @@ class ProfileController extends GetxController {
   final alternateContactController = TextEditingController();
   final familyAddressController = TextEditingController();
 
+  bool _loaded = false;
+
   void toggleNotification() {
     isNotificationEnabled = !isNotificationEnabled;
 
@@ -114,8 +116,15 @@ class ProfileController extends GetxController {
   void onReady() {
     // TODO: implement onReady
     super.onReady();
+  }
+
+
+  Future<void> loadData() async {
+    if (_loaded) return;
+    _loaded = true;
     loadCurrentUser();
   }
+
 
   void loadCurrentUser() {
     currentUser = AppStorage.instance.getUserData();

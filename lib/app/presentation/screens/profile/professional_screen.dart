@@ -18,7 +18,7 @@ class ProfessionalScreen extends GetView<ProfileController> {
     return GetBuilder<ProfileController>(
       builder: (controller) {
         return ProfileDetailScreen(
-          title: "Professional Information",
+          title: "Professional",
 
           isEditing: controller.isProfessionalEditing,
           showActionButton: false,

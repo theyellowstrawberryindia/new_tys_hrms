@@ -25,6 +25,8 @@ class UpdateController extends GetxController {
 
   final PageController pageController = PageController();
 
+  bool _loaded = false;
+
 
   void changeTab(int index) {
     selectedTab = index;
@@ -47,6 +49,13 @@ class UpdateController extends GetxController {
   @override
   void onReady() {
     super.onReady();
+  }
+
+
+  Future<void> loadData() async {
+    if (_loaded) return;
+
+    _loaded = true;
 
     getApprovals();
 

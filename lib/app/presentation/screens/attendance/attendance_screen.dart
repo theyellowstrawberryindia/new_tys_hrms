@@ -125,14 +125,15 @@ class AttendanceScreen extends StatelessWidget {
                   ),
 
                   ListView.builder(
-                    itemCount: controller.attendanceList.length,
+                    itemCount: controller.filteredAttendanceList.length,
 
                     shrinkWrap: true,
 
                     physics: const NeverScrollableScrollPhysics(),
 
                     itemBuilder: (context, index) {
-                      final item = controller.attendanceList[index];
+
+                      final item = controller.filteredAttendanceList[index];
                       //AppUtils.printMessage("attendanceId -- ${item.id.toString()}");
 
                       return AttendanceListItem(

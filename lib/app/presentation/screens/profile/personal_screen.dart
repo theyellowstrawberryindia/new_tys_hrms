@@ -19,7 +19,7 @@ class PersonalScreen extends GetView<ProfileController> {
     return GetBuilder<ProfileController>(
       builder: (controller) {
         return ProfileDetailScreen(
-          title: "Personal Details",
+          title: "Personal",
 
           isEditing: controller.isPersonalEditing,
           showActionButton: false,

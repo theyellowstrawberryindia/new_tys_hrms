@@ -10,6 +10,15 @@ import 'package:hrms_ys/app/data/repository/attendance_repository.dart';
 
 import '../../packages.dart';
 
+enum AttendanceFilter {
+  all,
+  present,
+  absent,
+  late,
+  leave,
+  halfDay,
+}
+
 
 class AttendanceController extends GetxController {
 
@@ -55,6 +64,10 @@ class AttendanceController extends GetxController {
 
   List<AttendanceData> attendanceList = [];
 
+  List<AttendanceData> filteredAttendanceList = [];
+
+  AttendanceFilter selectedFilter = AttendanceFilter.all;
+
   final List<String> months = [
     "January",
     "February",
@@ -79,7 +92,7 @@ class AttendanceController extends GetxController {
   @override
   void onReady() {
     // TODO: implement onReady
-    getAttendanceHistory();
+    //getAttendanceHistory();
 
     super.onReady();
   }
@@ -101,6 +114,19 @@ class AttendanceController extends GetxController {
 
     getAttendanceHistory();
   }
+
+  int get totalDaysInMonth {
+    return DateTime(selectedYear, selectedMonth + 1, 0).day;
+  }
+
+  int get workingDays {
+    return attendanceResponse?.attendanceCount?.workingDays ?? totalDaysInMonth;
+  }
+
+  int get workingHoursInMonth {
+    return workingDays * 9;
+  }
+
 
   Color getStatusColor(String? status) {
     switch (status) {
@@ -191,6 +217,9 @@ class AttendanceController extends GetxController {
 
             attendanceList = attendanceResponse?.data ?? [];
 
+            filteredAttendanceList = List.from(attendanceList);
+            selectedFilter = AttendanceFilter.all;
+
             final summary = attendanceResponse?.attendanceCount;
 
             presentDays = summary?.presentCount ?? 0;
@@ -215,6 +244,50 @@ class AttendanceController extends GetxController {
             Toast.error(message: e);
           },
         );
+  }
+
+  void filterAttendance(AttendanceFilter filter) {
+
+    /// Toggle
+    if (selectedFilter == filter) {
+      filter = AttendanceFilter.all;
+    }
+
+    selectedFilter = filter;
+
+    switch (filter) {
+
+      case AttendanceFilter.all:
+        filteredAttendanceList = List.from(attendanceList);
+        break;
+
+      case AttendanceFilter.present:
+        filteredAttendanceList =
+            attendanceList.where((e) => e.attStatus == "Present").toList();
+        break;
+
+      case AttendanceFilter.late:
+        filteredAttendanceList =
+            attendanceList.where((e) => e.isLate == 1).toList();
+        break;
+
+      case AttendanceFilter.absent:
+        filteredAttendanceList =
+            attendanceList.where((e) => e.attStatus == "Absent").toList();
+        break;
+
+      case AttendanceFilter.leave:
+        filteredAttendanceList =
+            attendanceList.where((e) => e.attStatus == "Leave").toList();
+        break;
+
+      case AttendanceFilter.halfDay:
+        filteredAttendanceList =
+            attendanceList.where((e) => e.attStatus == "Half Day").toList();
+        break;
+    }
+
+    update();
   }
 
 }

@@ -18,7 +18,7 @@ class ContactScreen extends GetView<ProfileController> {
     return GetBuilder<ProfileController>(
       builder: (controller) {
         return ProfileDetailScreen(
-          title: "Contact Information",
+          title: "Contact",
 
           isEditing: controller.isContactEditing,
           showActionButton: false,

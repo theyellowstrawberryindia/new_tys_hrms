@@ -71,6 +71,9 @@ class HomeController extends GetxController {
 
   String attendanceDate = "";
 
+  bool _loaded = false;
+
+
   bool get shouldShowCheckoutConfirmation {
     return isCheckedIn;
   }
@@ -113,6 +116,13 @@ class HomeController extends GetxController {
     super.onReady();
     _getUser();
     _getTodaysAttendance();
+  }
+
+  Future<void> loadData() async {
+    if (_loaded) return;
+    _loaded = true;
+    // _getUser();
+    // _getTodaysAttendance();
   }
 
   /// Refresh

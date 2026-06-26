@@ -52,9 +52,9 @@ class CurrentUser {
   List<PersonalDetail> personalDetails;
   List<FamilyDetail> familyDetails;
   List<BankDetail> bankDetails;
-  List<dynamic> workExperience;
-  List<dynamic> projects;
-  List<dynamic> education;
+  List<WorkExperience> workExperience;
+  List<Project> projects;
+  List<Education> education;
   String message;
 
   CurrentUser({
@@ -100,17 +100,17 @@ class CurrentUser {
             json["bankDetails"].map((x) => BankDetail.fromJson(x)),
           ),
 
-    workExperience: json["workExperience"] == null
-        ? []
-        : List<dynamic>.from(json["workExperience"].map((x) => x)),
+    workExperience: (json["workExperience"] as List? ?? [])
+        .map((e) => WorkExperience.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
 
-    projects: json["projects"] == null
-        ? []
-        : List<dynamic>.from(json["projects"].map((x) => x)),
+    projects: (json["projects"] as List? ?? [])
+        .map((e) => Project.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
 
-    education: json["education"] == null
-        ? []
-        : List<dynamic>.from(json["education"].map((x) => x)),
+    education: (json["education"] as List? ?? [])
+        .map((e) => Education.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
 
     message: safeString(json["message"]),
   );
@@ -125,9 +125,11 @@ class CurrentUser {
     ),
     "familyDetails": List<dynamic>.from(familyDetails.map((x) => x.toJson())),
     "bankDetails": List<dynamic>.from(bankDetails.map((x) => x.toJson())),
-    "workExperience": List<dynamic>.from(workExperience.map((x) => x)),
-    "projects": List<dynamic>.from(projects.map((x) => x)),
-    "education": List<dynamic>.from(education.map((x) => x)),
+    "workExperience": workExperience.map((e) => e.toJson()).toList(),
+
+    "projects": projects.map((e) => e.toJson()).toList(),
+
+    "education": education.map((e) => e.toJson()).toList(),
     "message": message,
   };
 }
@@ -178,7 +180,7 @@ class BankDetail {
     accountNo: safeString(json["account_no"]),
     ifscCode: safeString(json["ifsc_code"]),
     branchName: safeString(json["branch_name"]),
-    nameAsBank: json["name_as_bank"],
+    nameAsBank: safeString(json["name_as_bank"]),
     bankAddress: safeString(json["bank_address"]),
     panCard: safeString(json["pan_card"]),
     aadharCard: safeString(json["aadhar_card"]),
@@ -252,18 +254,18 @@ class Data {
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
     id: json["id"],
-    userid: json["userid"],
-    firstName: json["first_name"],
-    lastName: json["last_name"],
-    email: json["email"],
-    phoneNumber: json["phone_number"],
-    emailVerifiedAt: json["email_verified_at"],
-    status: json["status"],
-    type: json["type"],
-    workLocation: json["work_location"],
-    userType: json["user_type"],
-    createdAt: DateTime.parse(json["created_at"]),
-    updatedAt: DateTime.parse(json["updated_at"]),
+    userid: safeInt(json["userid"]),
+    firstName: safeString(json["first_name"]),
+    lastName: safeString(json["last_name"]),
+    email: safeString(json["email"]),
+    phoneNumber: safeString(json["phone_number"]),
+    emailVerifiedAt: safeString(json["email_verified_at"]),
+    status: safeString(json["status"]),
+    type: safeString(json["type"]),
+    workLocation: safeString(json["work_location"]),
+    userType: safeString(json["user_type"]),
+    createdAt: safeDate(json["created_at"]) ?? DateTime.now(),
+    updatedAt: safeDate(json["updated_at"]) ?? DateTime.now(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -307,16 +309,15 @@ class FamilyDetail {
   });
 
   factory FamilyDetail.fromJson(Map<String, dynamic> json) => FamilyDetail(
-    id: json["id"],
-    userid: json["userid"],
-    fatherName: json["father_name"],
-    motherName: json["mother_name"],
-    personalEmail: json["personal_email"],
-    alternateContact: json["alternate_contact"],
-    familyAddress: json["family_address"],
+    id: safeInt(json["id"]),
+    userid: safeString(json["userid"]),
+    fatherName: safeString(json["father_name"]),
+    motherName: safeString(json["mother_name"]),
+    personalEmail: safeString(json["personal_email"]),
+    alternateContact: safeString(json["alternate_contact"]),
+    familyAddress: safeString(json["family_address"]),
     createdAt: safeDate(json["created_at"]) ?? DateTime.now(),
     updatedAt: safeDate(json["updated_at"]) ?? DateTime.now(),
-
   );
 
   Map<String, dynamic> toJson() => {
@@ -491,7 +492,6 @@ class ProfessionalDetail {
   };
 }
 
-
 class Education {
   int id;
   String userid;
@@ -516,15 +516,15 @@ class Education {
   });
 
   factory Education.fromJson(Map<String, dynamic> json) => Education(
-    id: json["id"],
-    userid: json["userid"],
-    universityName: json["university_name"],
-    courseName: json["course_name"],
-    startDate: DateTime.parse(json["start_date"]),
-    endDate: DateTime.parse(json["end_date"]),
-    grade: json["grade"],
-    createdAt: DateTime.parse(json["created_at"]),
-    updatedAt: DateTime.parse(json["updated_at"]),
+    id: safeInt(json["id"]),
+    userid: safeString(json["userid"]),
+    universityName: safeString(json["university_name"]),
+    courseName: safeString(json["course_name"]),
+    startDate: safeDate(json["start_date"]) ?? DateTime.now(),
+    endDate: safeDate(json["end_date"]) ?? DateTime.now(),
+    grade: safeString(json["grade"]),
+    createdAt: safeDate(json["created_at"]) ?? DateTime.now(),
+    updatedAt: safeDate(json["updated_at"]) ?? DateTime.now(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -532,14 +532,15 @@ class Education {
     "userid": userid,
     "university_name": universityName,
     "course_name": courseName,
-    "start_date": "${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}",
-    "end_date": "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
+    "start_date":
+        "${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}",
+    "end_date":
+        "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
     "grade": grade,
     "created_at": createdAt.toIso8601String(),
     "updated_at": updatedAt.toIso8601String(),
   };
 }
-
 
 class Project {
   int id;
@@ -563,14 +564,14 @@ class Project {
   });
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-    id: json["id"],
-    userid: json["userid"],
-    title: json["title"],
-    description: json["description"],
-    startDate: DateTime.parse(json["start_date"]),
-    endDate: DateTime.parse(json["end_date"]),
-    createdAt: DateTime.parse(json["created_at"]),
-    updatedAt: DateTime.parse(json["updated_at"]),
+    id: safeInt(json["id"]),
+    userid: safeString(json["userid"]),
+    title: safeString(json["title"]),
+    description: safeString(json["description"]),
+    startDate: safeDate(json["start_date"]) ?? DateTime.now(),
+    endDate: safeDate(json["end_date"]) ?? DateTime.now(),
+    createdAt: safeDate(json["created_at"]) ?? DateTime.now(),
+    updatedAt: safeDate(json["updated_at"]) ?? DateTime.now(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -578,8 +579,10 @@ class Project {
     "userid": userid,
     "title": title,
     "description": description,
-    "start_date": "${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}",
-    "end_date": "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
+    "start_date":
+        "${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}",
+    "end_date":
+        "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
     "created_at": createdAt.toIso8601String(),
     "updated_at": updatedAt.toIso8601String(),
   };
@@ -609,15 +612,15 @@ class WorkExperience {
   });
 
   factory WorkExperience.fromJson(Map<String, dynamic> json) => WorkExperience(
-    id: json["id"],
-    userid: json["userid"],
-    componyName: json["compony_name"],
-    designation: json["designation"],
-    startDate: DateTime.parse(json["start_date"]),
-    endDate: DateTime.parse(json["end_date"]),
-    exp: json["exp"],
-    createdAt: DateTime.parse(json["created_at"]),
-    updatedAt: DateTime.parse(json["updated_at"]),
+    id: safeInt(json["id"]),
+    userid: safeString(json["userid"]),
+    componyName: safeString(json["compony_name"]),
+    designation: safeString(json["designation"]),
+    startDate: safeDate(json["start_date"]) ?? DateTime.now(),
+    endDate: safeDate(json["end_date"]) ?? DateTime.now(),
+    exp: safeString(json["exp"]),
+    createdAt: safeDate(json["created_at"]) ?? DateTime.now(),
+    updatedAt: safeDate(json["updated_at"]) ?? DateTime.now(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -625,8 +628,10 @@ class WorkExperience {
     "userid": userid,
     "compony_name": componyName,
     "designation": designation,
-    "start_date": "${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}",
-    "end_date": "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
+    "start_date":
+        "${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}",
+    "end_date":
+        "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
     "exp": exp,
     "created_at": createdAt.toIso8601String(),
     "updated_at": updatedAt.toIso8601String(),

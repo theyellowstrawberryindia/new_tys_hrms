@@ -63,7 +63,7 @@ class AttendanceSummaryCard extends StatelessWidget {
               const SizedBox(width: 8),
 
               Text(
-                "${controller.presentDays}/30",
+                  "${controller.presentDays}/${controller.workingDays}",
                 style: AppTheme.textStyle( weight: FontWeight.w600),
               ),
 
@@ -88,7 +88,7 @@ class AttendanceSummaryCard extends StatelessWidget {
               const SizedBox(width: 8),
 
               Text(
-                "${controller.completedHours}/225",
+                "${controller.completedHours}/ ${controller.workingHoursInMonth}",
                 style: AppTheme.textStyle( weight: FontWeight.w600),
               ),
             ],
@@ -100,47 +100,100 @@ class AttendanceSummaryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: _summaryItem(
-                  label: "PRESENT",
-                  value: "${controller.presentDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
-                  color: AppColor.kSuccessColor,
-                  progress: controller.presentDays / 30,
+                child: InkWell(
+                  onTap: (){
+                    controller.filterAttendance(AttendanceFilter.present);
+                  },
+                  child: _summaryItem(
+                    label: "PRESENT",
+                    value: "${controller.presentDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
+                    color: AppColor.kSuccessColor,
+                    progress: controller.presentDays / controller.workingDays,
+                    isSelected:
+                    controller.selectedFilter == AttendanceFilter.present,
+
+                    onTap: () {
+                      controller.filterAttendance(AttendanceFilter.present);
+                    },
+                  ),
                 ),
               ),
 
               Expanded(
-                child: _summaryItem(
-                  label: "ABSENT",
-                  value: "${controller.absentDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
-                  color: AppColor.kErrorColor,
-                  progress: controller.absentDays / 30,
+                child: InkWell(
+                  onTap: (){
+                    controller.filterAttendance(AttendanceFilter.absent);
+                  },
+                  child: _summaryItem(
+                    label: "ABSENT",
+                    value: "${controller.absentDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
+                    color: AppColor.kErrorColor,
+                    progress: controller.absentDays / controller.workingDays,
+                    isSelected:
+                    controller.selectedFilter == AttendanceFilter.absent,
+
+                    onTap: () {
+                      controller.filterAttendance(AttendanceFilter.absent);
+                    },
+                  ),
                 ),
               ),
 
               Expanded(
-                child: _summaryItem(
-                  label: "LATE",
-                  value: "${controller.lateDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
-                  color: Colors.amber,
-                  progress: controller.lateDays / 30,
+                child: InkWell(
+                  onTap: (){
+                    controller.filterAttendance(AttendanceFilter.late);
+                  },
+                  child: _summaryItem(
+                    label: "LATE",
+                    value: "${controller.lateDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
+                    color: Colors.amber,
+                    progress: controller.lateDays / controller.workingDays,
+                    isSelected:
+                    controller.selectedFilter == AttendanceFilter.late,
+
+                    onTap: () {
+                      controller.filterAttendance(AttendanceFilter.late);
+                    },
+                  ),
                 ),
               ),
 
               Expanded(
-                child: _summaryItem(
-                  label: "LEAVE",
-                  value: "${controller.leaveDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
-                  color: Colors.blue,
-                  progress: controller.leaveDays / 30,
+                child: InkWell(
+                  onTap: (){
+                    controller.filterAttendance(AttendanceFilter.leave);
+                  },
+                  child: _summaryItem(
+                    label: "LEAVE",
+                    value: "${controller.leaveDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
+                    color: Colors.blue,
+                    progress: controller.leaveDays / controller.workingDays,
+                    isSelected:
+                    controller.selectedFilter == AttendanceFilter.leave,
+                    onTap: () {
+                      controller.filterAttendance(AttendanceFilter.leave);
+                    },
+                  ),
                 ),
               ),
 
               Expanded(
-                child: _summaryItem(
-                  label: "HALF DAY",
-                  value: "${controller.halfDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
-                  color: Colors.purple,
-                  progress: controller.halfDays / 30,
+                child: InkWell(
+                  onTap: (){
+                    controller.filterAttendance(AttendanceFilter.halfDay);
+                  },
+                  child: _summaryItem(
+                    label: "HALF DAY",
+                    value: "${controller.halfDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
+                    color: Colors.purple,
+                    progress: controller.halfDays / controller.workingDays,
+                    isSelected:
+                    controller.selectedFilter == AttendanceFilter.halfDay,
+                    onTap: () {
+                      controller.filterAttendance(AttendanceFilter.halfDay);
+                    },
+                  ),
                 ),
               ),
             ],
@@ -152,63 +205,90 @@ class AttendanceSummaryCard extends StatelessWidget {
 
   Widget _summaryItem({
     required String label,
-
     required String value,
-
     required Color color,
-
     required double progress,
+
+    /// NEW
+    required bool isSelected,
+    required VoidCallback onTap,
   }) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 44,
-          width: 44,
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
 
-          child: Stack(
-            alignment: Alignment.center,
+      onTap: onTap,
 
-            children: [
-              CircularProgressIndicator(
-                value: progress.clamp(0, 1),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
 
-                strokeWidth: 6,
+        padding: const EdgeInsets.all(6),
 
-                backgroundColor: color.withValues(alpha: 0.15),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color.withValues(alpha: 0.10)
+              : Colors.transparent,
 
-                valueColor: AlwaysStoppedAnimation(color),
-              ),
+          borderRadius: BorderRadius.circular(12),
 
-              Container(
-                height: 44,
-                width: 44,
-
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-
-                  border: Border.all(color: color.withValues(alpha: 0.5)),
-                ),
-              ),
-            ],
+          border: Border.all(
+            color: isSelected
+                ? color
+                : Colors.transparent,
+            width: 1.5,
           ),
         ),
 
-        const SizedBox(height: 8),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 44,
+              width: 44,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress.clamp(0, 1),
+                    strokeWidth: 6,
+                    backgroundColor: color.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation(color),
+                  ),
 
-        Text(
-          value,
+                  Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: color.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-          style: AppTheme.textStyle(size: 12, weight: FontWeight.w600),
+            const SizedBox(height: 8),
+
+            Text(
+              value,
+              style: AppTheme.textStyle(
+                size: 12,
+                weight: FontWeight.w600,
+              ),
+            ),
+
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: AppTheme.textStyle(
+                size: 10,
+                color: AppColor.kGrayTextColor,
+              ),
+            ),
+          ],
         ),
-
-        Text(
-          label,
-
-          textAlign: TextAlign.center,
-
-          style: AppTheme.textStyle(size: 10, color: AppColor.kGrayTextColor),
-        ),
-      ],
+      ),
     );
   }
+
 }
