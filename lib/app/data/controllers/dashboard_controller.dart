@@ -19,20 +19,29 @@ import '../bindings/profile_binding.dart';
 import '../bindings/update_binding.dart';
 import 'attendance_controller.dart';
 
-
-
 /// For your HRMS project,
 /// (controllers registered once, APIs loaded on demand with a _loaded flag
 /// and explicit loadData() methods) is the architecture
 /// It fits well with GetX, 'preserves your existing navigation logic,
 /// and avoids the complexity of creating and destroying controllers dynamically.
 
-class DashboardController extends GetxController {
-
+class DashboardController extends GetxController
+    with GetTickerProviderStateMixin {
   int selectedIndex = 0;
 
-  final List<Widget> screens = [
+  /// Bottom Navigation Animation
+  ///
 
+  late AnimationController navAnimationController;
+
+  late Animation<double> iconScaleAnimation;
+
+  late Animation<double> pillWidthAnimation;
+
+  int animatingIndex = -1;
+
+
+  final List<Widget> screens = [
     const HomeScreen(),
 
     const AttendanceScreen(),
@@ -40,41 +49,57 @@ class DashboardController extends GetxController {
     const UpdateScreen(),
 
     const ProfileScreen(),
+
+
   ];
 
-  void changeTab(int index) {
+  Future<void> changeTab(int index) async {
+
+    if (selectedIndex == index) return;
+
+    animatingIndex = index;
+
+    navAnimationController.forward(from: 0);
 
     selectedIndex = index;
 
     switch (index) {
+
       case 0:
-        var controller = Get.find<HomeController>();
-        controller.loadData();
+        Get.find<HomeController>().loadData();
         break;
 
       case 1:
-        var controller = Get.find<AttendanceController>();
-        controller.refreshAttendance();
+        Get.find<AttendanceController>().refreshAttendance();
         break;
 
       case 2:
-        var controller = Get.find<UpdateController>();
-        controller.loadData();
+        Get.find<UpdateController>().loadData();
         break;
 
       case 3:
-        var controller = Get.find<ProfileController>();
-        controller.loadData();
+        Get.find<ProfileController>().loadData();
         break;
     }
 
 
-    update();
+    Future.delayed(
+      const Duration(milliseconds: 250),
+          () {
+
+        animatingIndex = -1;
+
+        navAnimationController.reset();
+
+        update();
+      },
+    );
+
   }
+
 
   @override
   void onInit() {
-
     HomeBinding().dependencies();
 
     AttendanceBinding().dependencies();
@@ -84,7 +109,42 @@ class DashboardController extends GetxController {
     ProfileBinding().dependencies();
 
     super.onInit();
+
+    _initBottomAnimation();
+  }
+
+  void _initBottomAnimation() {
+
+    navAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    );
+
+    iconScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.12,
+    ).animate(
+      CurvedAnimation(
+        parent: navAnimationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    pillWidthAnimation = Tween<double>(
+      begin: 0,
+      end: 54,
+    ).animate(
+      CurvedAnimation(
+        parent: navAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
+  @override
+  void onClose() {
+    navAnimationController.dispose();
+
+    super.onClose();
   }
 }
-
-

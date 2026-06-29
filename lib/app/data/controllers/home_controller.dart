@@ -26,7 +26,7 @@ import '../models/attendance_data.dart';
 import '../models/current_user.dart';
 import '../repository/home_repository.dart';
 
-class HomeController extends GetxController {
+class HomeController extends GetxController with GetTickerProviderStateMixin {
   final homeRepository = HomeRepository();
 
   /// TIME
@@ -73,6 +73,32 @@ class HomeController extends GetxController {
 
   bool _loaded = false;
 
+  /// ANIMATIONS
+  ///
+  late AnimationController buttonPressController;
+
+  late AnimationController pulseController;
+
+  late Animation<double> buttonPressAnimation;
+
+  late Animation<double> pulseAnimation;
+
+  bool isButtonPressed = false;
+
+
+  /// STATS CARD ANIMATION
+  ///
+
+  late AnimationController statsIconController;
+
+  late Animation<double> clockInRotation;
+
+  late Animation<double> clockOutRotation;
+
+  late Animation<double> totalHourRotation;
+
+
+  late Animation<double> cardElevation;
 
   bool get shouldShowCheckoutConfirmation {
     return isCheckedIn;
@@ -90,14 +116,10 @@ class HomeController extends GetxController {
     return "Are you ready to check-out at this time?";
   }
 
-
   bool get isOfficeEmployee {
-    return currentUser?.data.first.workLocation
-        ?.toLowerCase()
-        .trim() ==
+    return currentUser?.data.first.workLocation?.toLowerCase().trim() ==
         "office";
   }
-
 
   @override
   void onInit() {
@@ -108,6 +130,8 @@ class HomeController extends GetxController {
     _startClock();
 
     startLocationListener();
+
+    _initAnimations();
   }
 
   @override
@@ -131,6 +155,146 @@ class HomeController extends GetxController {
     _getUser();
   }
 
+  void _initAnimations() {
+    /// Button Press
+    buttonPressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 80),
+    );
+
+    buttonPressAnimation = Tween<double>(begin: 1, end: .92).animate(
+      CurvedAnimation(parent: buttonPressController, curve: Curves.easeOut),
+    );
+
+    /// Pulse
+    pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    pulseAnimation = Tween<double>(begin: 1, end: 1.06).animate(
+      CurvedAnimation(parent: pulseController, curve: Curves.easeInOutCubic),
+    );
+
+    startPulse();
+
+    /// Stats Icon Animation
+    statsIconController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    clockInRotation = Tween<double>(
+      begin: -.08,
+      end: .08,
+    ).animate(
+      CurvedAnimation(
+        parent: statsIconController,
+        curve: const Interval(
+          0.0,
+          .35,
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
+
+    clockOutRotation = Tween<double>(
+      begin: -.08,
+      end: .08,
+    ).animate(
+      CurvedAnimation(
+        parent: statsIconController,
+        curve: const Interval(
+          .20,
+          .60,
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
+
+    totalHourRotation = Tween<double>(
+      begin: -.08,
+      end: .08,
+    ).animate(
+      CurvedAnimation(
+        parent: statsIconController,
+        curve: const Interval(
+          .45,
+          1,
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
+
+    _startStatsAnimation();
+
+  }
+
+  Future<void> startPulse() async {
+    while (!isClosed) {
+      /// Stop pulse after check-in
+      if (attendanceButtonText == "Check Out") {
+        pulseController.stop();
+        break;
+      }
+
+      await pulseController.forward();
+
+      await pulseController.reverse();
+
+      await Future.delayed(const Duration(milliseconds: 2500));
+    }
+  }
+
+  Future<void> _startStatsAnimation() async {
+
+    while (!isClosed) {
+
+      await Future.delayed(
+        const Duration(seconds: 4),
+      );
+
+      if (isClosed) break;
+
+      await statsIconController.forward();
+
+      await statsIconController.reverse();
+    }
+  }
+
+
+  void onButtonTapDown() {
+    isButtonPressed = true;
+
+    buttonPressController.forward();
+  }
+
+  Future<void> onButtonTapUp() async {
+    isButtonPressed = false;
+
+    await buttonPressController.forward();
+    await buttonPressController.reverse();
+
+    await pulseController.forward();
+    await pulseController.reverse();
+
+    await createAttendance();
+  }
+
+  void onButtonTapCancel() {
+    isButtonPressed = false;
+
+    buttonPressController.reverse();
+  }
+
+  Color get locationColor {
+    if (attendanceButtonText == "Check In") {
+      return AppColor.kPrimaryColor;
+    }
+
+    return isLateCheckIn ? AppColor.kPrimaryColor : AppColor.kSuccessColor;
+  }
+
   /// CLOCK
   void _startClock() {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -142,7 +306,7 @@ class HomeController extends GetxController {
   void _updateTime() {
     final now = DateTime.now();
 
-    currentTime = DateFormat("HH:mm").format(now);
+    currentTime = DateFormat("HH:mm:ss").format(now);
 
     currentDate = DateFormat("EEEE | MMM dd").format(now);
 
@@ -296,22 +460,17 @@ class HomeController extends GetxController {
 
         if (isOfficeEmployee) {
           officeDistance =
-          "You are ${distance.toStringAsFixed(1)} meter away from office";
+              "You are ${distance.toStringAsFixed(1)} meter away from office";
         } else {
-          officeDistance =
-          "Remote Working Location";
+          officeDistance = "Remote Working Location";
         }
-
 
         /// 50 METER RADIUS
         isInsideOfficeRadius = distance <= 50;
 
         /// OFFICE EMPLOYEE => 50 meter rule
         /// REMOTE EMPLOYEE => anywhere
-        canClockIn = isOfficeEmployee
-            ? distance <= 50
-            : true;
-
+        canClockIn = isOfficeEmployee ? distance <= 50 : true;
 
         AppUtils.printMessage("Inside Office Radius : $isInsideOfficeRadius");
 
@@ -330,7 +489,6 @@ class HomeController extends GetxController {
 
   Future<void> createAttendance() async {
     try {
-
       if (isOfficeEmployee && !canClockIn) {
         Toast.error(
           message: "You must be within 50 meters of the office to check in",
@@ -351,7 +509,6 @@ class HomeController extends GetxController {
           positiveText: isCheckedOut ? "Update" : "Check-out",
 
           //icon: Icons.access_time,
-
           positiveColor: AppColor.kCheckOutRed_1,
         );
 
@@ -433,7 +590,6 @@ class HomeController extends GetxController {
 
         /// call Post token
         _postToken();
-
       },
       onError: (e) {
         Loader.hideLoader();
@@ -490,10 +646,8 @@ class HomeController extends GetxController {
     }
   }
 
-
   /// POST TOKEN
   Future<void> _postToken() async {
-
     /// DEVICE INFO
     final deviceInfo = await DeviceInfoService.getDeviceData();
 
@@ -507,29 +661,31 @@ class HomeController extends GetxController {
     };
 
     Loader.showLoader();
-    homeRepository.postToken(body).then(
+    homeRepository
+        .postToken(body)
+        .then(
           (value) {
-        Loader.hideLoader();
-        AppUtils.printMessage(
-          "Token sent",
+            Loader.hideLoader();
+            AppUtils.printMessage("Token sent");
+          },
+          onError: (e) {
+            Loader.hideLoader();
+            Toast.error(message: e);
+          },
         );
-      },
-      onError: (e) {
-        Loader.hideLoader();
-        Toast.error(message: e);
-      },
-    );
   }
-
-
-
-
 
   @override
   void onClose() {
     timer?.cancel();
 
     positionStream?.cancel();
+
+    buttonPressController.dispose();
+
+    pulseController.dispose();
+
+    statsIconController.dispose();
 
     super.onClose();
   }

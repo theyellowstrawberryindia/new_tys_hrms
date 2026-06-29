@@ -103,7 +103,7 @@ class HomeScreen extends GetView<HomeController> {
                           controller.currentTime,
 
                           style: AppTheme.textStyle(
-                            size: 26,
+                            size: 28,
                             weight: FontWeight.w600,
                           ),
                         ),
@@ -116,6 +116,7 @@ class HomeScreen extends GetView<HomeController> {
                           style: AppTheme.textStyle(
                             size: 16,
                             color: AppColor.kGrayTextColor,
+                            weight: FontWeight.w500
                           ),
                         ),
 
@@ -123,45 +124,86 @@ class HomeScreen extends GetView<HomeController> {
 
                         /// CLOCK IN BUTTON
                         GestureDetector(
-                          onTap: controller.createAttendance,
 
-                          child: Container(
-                            width: 180,
-                            height: 180,
+                          onTapDown: (_) {
+                            controller.onButtonTapDown();
+                          },
 
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                          onTapUp: (_) {
+                            controller.onButtonTapUp();
+                          },
 
-                              gradient: LinearGradient(
-                                colors: controller.attendanceGradient,
+                          onTapCancel: controller.onButtonTapCancel,
 
-                                begin: Alignment.topLeft,
+                          child: ScaleTransition(
 
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
+                            scale: controller.pulseAnimation,
 
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: AnimatedBuilder(
 
-                              children: [
-                                CommonSvgIcon(
-                                  asset: AssetPath.checkIn,
-                                  size: 88,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  controller.attendanceButtonText,
+                              animation: controller.buttonPressAnimation,
 
-                                  style: AppTheme.textStyle(
-                                    size: 16,
-                                    weight: FontWeight.w700,
+                              builder: (_, child) {
 
-                                    color: Colors.white,
+                                return Transform.scale(
+                                  scale: controller.buttonPressAnimation.value,
+                                  child: child,
+                                );
+                              },
+
+                              child: Container(
+
+                                width: 180,
+                                height: 180,
+
+                                decoration: BoxDecoration(
+
+                                  shape: BoxShape.circle,
+
+                                  gradient: LinearGradient(
+                                    colors: controller.attendanceGradient,
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
+
+                                  boxShadow: [
+
+                                    BoxShadow(
+
+                                      color: controller.attendanceColor.withValues(alpha: .2),
+
+                                      blurRadius: 30,
+
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
                                 ),
-                              ],
+
+                                child: Column(
+
+                                  mainAxisAlignment: MainAxisAlignment.center,
+
+                                  children: [
+
+                                    CommonSvgIcon(
+                                      asset: AssetPath.checkIn,
+                                      size: 88,
+                                      color: Colors.white,
+                                    ),
+
+                                    const SizedBox(height: 20),
+
+                                    Text(
+                                      controller.attendanceButtonText,
+                                      style: AppTheme.textStyle(
+                                        size: 16,
+                                        weight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -174,8 +216,9 @@ class HomeScreen extends GetView<HomeController> {
                               ? controller.officeDistance
                               : "Work Location : Remote",
                           style: AppTheme.textStyle(
-                            size: 12,
-                            color: AppColor.kGrayTextColor,
+                            size: 14,
+                              color: controller.locationColor,
+                            weight: FontWeight.w600
                           ),
                         ),
 
@@ -184,52 +227,79 @@ class HomeScreen extends GetView<HomeController> {
 
                           style: AppTheme.textStyle(
                             size: 10,
-                            color: AppColor.kGrayTextColor,
+                              color: controller.locationColor,
+                              weight: FontWeight.w600
                           ),
                         ),
 
                         const SizedBox(height: 44),
 
                         /// STATS CARD
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 350),
 
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-
-                            borderRadius: BorderRadius.circular(20),
-
-                            border: Border.all(color: AppColor.kPrimaryColor),
-                          ),
-
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                            children: [
-                              _item(
-                                iconPath: AssetPath.checkInIcon,
-                                title: controller.checkInTime,
-                                subtitle: "Clock in",
-                                color: controller.attendanceColor,
+                          curve: Curves.easeOutCubic,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                          
+                              borderRadius: BorderRadius.circular(22),
+                          
+                              border: Border.all(
+                                color: AppColor.kPrimaryColor.withValues(alpha: .18),
                               ),
+                          
+                              boxShadow: [
+                          
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: .05),
+                                  blurRadius: 18,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 10),
+                                ),
+                          
+                                BoxShadow(
+                                  color: AppColor.kPrimaryColor.withValues(alpha: .05),
+                                  blurRadius: 6,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          
+                              children: [
+                                _item(
+                                  iconPath: AssetPath.checkInIcon,
+                                  title: controller.checkInTime,
+                                  subtitle: "Clock in",
+                                  color: controller.attendanceColor,
+                                  rotation: controller.clockInRotation,
+                                ),
 
-                              _item(
-                                iconPath: AssetPath.checkOutIcon,
-                                title: controller.checkOutTime,
-                                subtitle: "Check out",
-                                color: controller.attendanceColor,
-                              ),
+                                _item(
+                                  iconPath: AssetPath.checkOutIcon,
+                                  title: controller.checkOutTime,
+                                  subtitle: "Check out",
+                                  color: controller.attendanceColor,
+                                  rotation: controller.clockOutRotation,
+                                ),
 
-                              _item(
-                                iconPath: AssetPath.timeIcon,
-                                title: controller.totalHours,
-                                subtitle: "Total hours",
-                                color: controller.attendanceColor,
-                              ),
-                            ],
+                                _item(
+                                  iconPath: AssetPath.timeIcon,
+                                  title: controller.totalHours,
+                                  subtitle: "Total hours",
+                                  color: controller.attendanceColor,
+                                  rotation: controller.totalHourRotation,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 
@@ -251,20 +321,87 @@ class HomeScreen extends GetView<HomeController> {
     required String title,
     required String subtitle,
     required Color color,
+
+    required Animation<double> rotation,
   }) {
     return Column(
       children: [
-        //Icon(icon, size: 20, color: AppColor.kGrayTextColor),
-        CommonSvgIcon(asset: iconPath, size: 20, color: color),
+        AnimatedBuilder(
+
+          animation: rotation,
+
+          builder: (_, child) {
+
+            return Transform.translate(
+              offset: Offset(
+                0,
+                -2 * rotation.value.abs() * 15,
+              ),
+              child: Transform.rotate(
+                angle: rotation.value,
+                child: child,
+              ),
+            );
+          },
+
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: .08),
+              border: Border.all(
+                color: color.withValues(alpha: .15),
+              ),
+            ),
+            child: Center(
+              child: CommonSvgIcon(
+                asset: iconPath,
+                size: 20,
+                color: color,
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
-        Text(
-          title,
-          style: AppTheme.textStyle(size: 16, weight: FontWeight.w500),
+
+        AnimatedSwitcher(
+
+          duration: const Duration(milliseconds: 300),
+
+          transitionBuilder: (child, animation) {
+
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: animation,
+                child: child,
+              ),
+            );
+          },
+
+          child: Text(
+            title,
+
+            key: ValueKey(title),
+
+            style: AppTheme.textStyle(
+              size: 16,
+              weight: FontWeight.w600,
+            ),
+          ),
         ),
 
-        Text(
-          subtitle,
-          style: AppTheme.textStyle(size: 10, color: AppColor.kGrayTextColor),
+        AnimatedDefaultTextStyle(
+
+          duration: const Duration(milliseconds: 250),
+
+          style: AppTheme.textStyle(
+            size: 10,
+            color: AppColor.kGrayTextColor,
+          ),
+
+          child: Text(subtitle),
         ),
       ],
     );

@@ -96,7 +96,7 @@ class AttendanceListItem extends StatelessWidget {
               textAlign: TextAlign.center,
 
               style: AppTheme.textStyle(
-                size: 12,
+                size: 14,
 
                 weight: FontWeight.w600,
 
@@ -113,7 +113,7 @@ class AttendanceListItem extends StatelessWidget {
               textAlign: TextAlign.center,
 
               style: AppTheme.textStyle(
-                size: 12,
+                size: 14,
 
                 weight: FontWeight.w600,
 
@@ -130,7 +130,7 @@ class AttendanceListItem extends StatelessWidget {
               textAlign: TextAlign.center,
 
               style: AppTheme.textStyle(
-                size: 12,
+                size: 14,
 
                 weight: FontWeight.w600,
 

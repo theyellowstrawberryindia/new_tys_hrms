@@ -92,58 +92,151 @@ class CommonBottomBar extends StatelessWidget {
     required int index,
     required DashboardController controller,
   }) {
+
     final theme = Theme.of(context);
 
     final bool isSelected = controller.selectedIndex == index;
 
-    return GestureDetector(
-      onTap: () {
-        controller.changeTab(index);
-      },
+    return Expanded(
 
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: InkWell(
 
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
+        borderRadius: BorderRadius.circular(30),
 
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        onTap: () {
+          controller.changeTab(index);
+        },
 
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColor.kPrimaryColor.withValues(alpha: 0.12)
-                  : Colors.transparent,
+        child: Column(
 
-              borderRadius: BorderRadius.circular(25),
+          mainAxisSize: MainAxisSize.min,
+
+          children: [
+
+            SizedBox(
+
+              height: 42,
+
+              child: Stack(
+
+                alignment: Alignment.center,
+
+                children: [
+
+                  AnimatedBuilder(
+
+                    animation: controller.navAnimationController,
+
+                    builder: (_, __) {
+
+                      final selected =
+                          controller.selectedIndex == index;
+
+                      final width =
+                      selected
+                          ? (controller.animatingIndex == index
+                          ? controller.pillWidthAnimation.value
+                          : 54.0)
+                          : 0.0;
+
+                      return AnimatedContainer(
+
+                        duration:
+                        const Duration(milliseconds: 220),
+
+                        curve: Curves.easeOut,
+
+                        width: width,
+
+                        height: 34,
+
+                        decoration: BoxDecoration(
+
+                          color: AppColor.kPrimaryColor
+                              .withValues(alpha: .12),
+
+                          borderRadius:
+                          BorderRadius.circular(20),
+                        ),
+                      );
+                    },
+                  ),
+
+                  AnimatedBuilder(
+
+                    animation: controller.iconScaleAnimation,
+
+                    builder: (_, child) {
+
+                      final animate =
+                          controller.animatingIndex == index;
+
+                      final scale =
+                      animate
+                          ? controller.iconScaleAnimation.value
+                          : 1.0;
+
+                      final lift =
+                      animate
+                          ? -(scale - 1) * 18
+                          : 0.0;
+
+                      return Transform.translate(
+
+                        offset: Offset(0, lift),
+
+                        child: Transform.scale(
+                          scale: scale,
+                          child: child,
+                        ),
+                      );
+                    },
+
+                    child: CommonSvgIcon(
+
+                      asset: iconPath,
+
+                      size: 26,
+
+                      color: isSelected
+                          ? theme
+                          .bottomNavigationBarTheme
+                          .selectedItemColor
+                          : theme
+                          .bottomNavigationBarTheme
+                          .unselectedItemColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-            child: CommonSvgIcon(
-              asset: iconPath,
-              size: 28,
+            const SizedBox(height: 6),
 
-              color: isSelected
-                  ? theme.bottomNavigationBarTheme.selectedItemColor
-                  : theme.bottomNavigationBarTheme.unselectedItemColor,
+            AnimatedDefaultTextStyle(
+
+              duration:
+              const Duration(milliseconds: 220),
+
+              curve: Curves.easeOut,
+
+              style: AppTheme.textStyle(
+
+                size: 10,
+
+                weight: isSelected
+                    ? FontWeight.w700
+                    : FontWeight.w500,
+
+                color: isSelected
+                    ? theme.bottomNavigationBarTheme.selectedItemColor
+                    : theme.bottomNavigationBarTheme.unselectedItemColor,
+              ),
+
+              child: Text(label),
             ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            label,
-
-            style: AppTheme.textStyle(
-              size: 10,
-
-              weight: FontWeight.w500,
-
-              color: isSelected
-                  ? theme.bottomNavigationBarTheme.selectedItemColor
-                  : theme.bottomNavigationBarTheme.unselectedItemColor,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
