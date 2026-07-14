@@ -22,7 +22,7 @@ class BankScreen extends GetView<ProfileController> {
           title: "Bank",
 
           isEditing: controller.isBankEditing,
-          showActionButton: false,
+          showActionButton: true,
 
           onEditSave: () {
             if (controller.isBankEditing) {

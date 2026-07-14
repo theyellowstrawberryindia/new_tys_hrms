@@ -15,11 +15,14 @@ class ProfileDetailScreen extends StatelessWidget {
 
   final bool isEditing;
 
+  final bool wrapInCard;
+
   final VoidCallback? onEditSave;
 
   final List<Widget> fields;
 
   final bool showActionButton;
+
 
   const ProfileDetailScreen({
     super.key,
@@ -28,11 +31,14 @@ class ProfileDetailScreen extends StatelessWidget {
     required this.fields,
     this.onEditSave,
     this.showActionButton = true,
+    this.wrapInCard = true,
+
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: CommonAppBar(
         title: title,
 
@@ -54,7 +60,9 @@ class ProfileDetailScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
 
-        child: Card(
+        child:
+        wrapInCard?
+        Card(
           elevation: 2,
 
           shape: RoundedRectangleBorder(
@@ -64,6 +72,9 @@ class ProfileDetailScreen extends StatelessWidget {
           child: Column(
             children: fields,
           ),
+        )
+            :Column(
+          children: fields,
         ),
       ),
     );

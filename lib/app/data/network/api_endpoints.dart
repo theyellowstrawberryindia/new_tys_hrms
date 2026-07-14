@@ -40,7 +40,9 @@ class APIEndpoints{
   static const String editProfessional = "$baseUrl/edit-personal/edit-professional";
   static const String editPersonal = "$baseUrl/edit-personal/edit-personal";
   static const String editFamily = "$baseUrl/edit-personal/edit-family";
-  static const String editBank = "$baseUrl/edit-personal/edit-bank";
+  static const String editBank = "$baseUrl/edit-bank";
+  static const String addEducation = "$baseUrl/edit-user";
+  static const String editEducation = "$baseUrl/edit-user";
 
   static const String postToken = "$baseUrl/add-user-deviceToken";
 

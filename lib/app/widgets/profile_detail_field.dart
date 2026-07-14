@@ -16,12 +16,14 @@ class ProfileDetailField extends StatelessWidget {
   final TextEditingController controller;
 
   final bool readOnly;
+  final VoidCallback? onTap;
+
 
   const ProfileDetailField({
     super.key,
     required this.title,
     required this.controller,
-    required this.readOnly,
+    required this.readOnly, this.onTap,
   });
 
   @override
@@ -49,6 +51,7 @@ class ProfileDetailField extends StatelessWidget {
             readOnly: readOnly,
             focusNode: FocusNode(),
             isFocused: false,
+            onTap: onTap,
           ),
         ],
       ),

@@ -36,6 +36,8 @@ class AssetPath {
 
   static const applyLeaveIcon ="assets/images/icons/ic_apply_leave.svg";
   static const holidayIcon ="assets/images/icons/ic_holiday.svg";
+  static const educationDetails ="assets/images/icons/ic_education.svg";
+  static const projectDetails ="assets/images/icons/ic_project_details.svg";
   static const approvalIcon ="assets/images/icons/ic_approval.svg";
 
   static const defaultProfile ="assets/images/default_picture.png";

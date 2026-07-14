@@ -61,16 +61,33 @@ class ProfileRepository {
     }
   }
 
-  Future<dynamic> updateBank(dynamic body) async {
+
+  Future<dynamic> updateBank(
+      Map<String, String> body, {
+        File? panCardImageFile,
+        File? aadharCardImageFile,
+      }) async {
     try {
-      final response = await ApiClient.client.get(APIEndpoints.getTodaysAttendance);
-      return response;
+      final files = <String, String>{};
+
+      if (panCardImageFile != null) {
+        files["pan_img"] = panCardImageFile.path;
+      }
+
+      if (aadharCardImageFile != null) {
+        files["aadhar_img"] = aadharCardImageFile.path;
+      }
+      body["_method"] = "PUT";
+      return await ApiClient.client.multipart(
+        APIEndpoints.editBank,
+        body: body,
+        files: files,
+        httpMethod: HttpMethod.post,
+      );
     } catch (e) {
       return Future.error(e);
     }
-  }
-
-  Future<dynamic> updateFamily(dynamic body) async {
+  }  Future<dynamic> updateFamily(dynamic body) async {
     try {
       final response = await ApiClient.client.get(APIEndpoints.getTodaysAttendance);
       return response;

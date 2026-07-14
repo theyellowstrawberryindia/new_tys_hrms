@@ -193,6 +193,18 @@ class ProfileScreen extends GetView<ProfileController> {
                     ),
                     _menuCard(
                       context,
+                      title: "Education",
+                      icon: AssetPath.educationDetails,
+                      onTap: controller.openEducation,
+                    ),
+                    _menuCard(
+                      context,
+                      title: "Project",
+                      icon: AssetPath.projectDetails,
+                      onTap: controller.openProject,
+                    ),
+                    _menuCard(
+                      context,
                       title: "Apply Leave",
                       icon: AssetPath.applyLeaveIcon,
                       onTap: controller.openApplyLeave,
@@ -203,6 +215,7 @@ class ProfileScreen extends GetView<ProfileController> {
                       icon: AssetPath.holidayIcon,
                       onTap: controller.openHoliday,
                     ),
+
                   ],
                 ),
 

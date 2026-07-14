@@ -178,8 +178,15 @@ class ApiClient {
           );
         }
       }
-
+      log("REQUEST MAP => $request");
       var form = FormData.fromMap(request);
+      for (final field in form.fields) {
+        log("FIELD => ${field.key} = ${field.value}");
+      }
+
+      for (final file in form.files) {
+        log("FILE => ${file.key} = ${file.value.filename}");
+      }
       _dio.options = _baseOptions;
 
       var method = 'POST';

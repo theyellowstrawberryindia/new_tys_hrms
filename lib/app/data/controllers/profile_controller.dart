@@ -21,6 +21,7 @@ import 'package:image_cropper/image_cropper.dart';
 import '../../core/configs/app_configs.dart';
 import '../../presentation/screens/profile/bank_screen.dart';
 import '../../presentation/screens/profile/contact_screen.dart';
+import '../../presentation/screens/profile/education_screen.dart';
 import '../../presentation/screens/profile/family_screen.dart';
 import '../../presentation/screens/profile/idcard_screen.dart';
 import '../../presentation/screens/profile/personal_screen.dart';
@@ -29,6 +30,7 @@ import '../../widgets/common_confirmation_dialog.dart';
 import '../../widgets/common_image_preview.dart';
 import '../../widgets/pdf_preview_screen.dart';
 import '../bindings/apple_leave_binding.dart';
+import '../bindings/education_binding.dart';
 import '../bindings/idcard_binding.dart';
 import '../models/current_user.dart';
 
@@ -58,6 +60,8 @@ class ProfileController extends GetxController {
   bool isBankEditing = false;
 
   bool isFamilyEditing = false;
+
+  bool isEducationEditing = false;
 
   final contactEmailController = TextEditingController();
   final contactPhoneController = TextEditingController();
@@ -450,6 +454,20 @@ class ProfileController extends GetxController {
     Get.to(HolidayScreen(showAppBar: true));
   }
 
+  void openEducation() {
+    loadCurrentUser();
+
+    Get.to(
+          () => const EducationDetailsScreen(),
+      binding: EducationDetailsBinding(),
+    );  }
+
+  void openProject() {
+    loadCurrentUser();
+
+    Get.to(() => const ContactScreen());
+  }
+
   void notificationSetting() {
     Get.to(NotificationScreen(showAppBar: true));
   }
@@ -589,37 +607,79 @@ class ProfileController extends GetxController {
   }
 
   Future<void> updateBank() async {
-    Map<String, dynamic> body = {};
+    if (currentUser == null || currentUser!.bankDetails.isEmpty) {
+      Toast.error(message: "Bank details not found.");
+      return;
+    }
+
+    final bank = currentUser!.bankDetails.first;
+
+    final body = <String, String>{
+      "userid": "${bank.userid}",
+      "name_as_bank": accountHolderController.text.trim(),
+      "bank_name": bankNameController.text.trim(),
+      "account_no": accountNumberController.text.trim(),
+      "ifsc_code": ifscController.text.trim(),
+      "branch_name": branchController.text.trim(),
+      "pan_card": panController.text.trim(),
+      "aadhar_card": aadharController.text.trim(),
+    };
+
     Loader.showLoader();
 
-    profileRepository.updateBank(body).then((value) {
+    profileRepository
+        .updateBank(
+      body,
+      panCardImageFile: panCardImageFile,
+      aadharCardImageFile: aadharCardImageFile,
+    )
+        .then((value) {
       Loader.hideLoader();
 
       if (value['success'] == true) {
-        final bank = currentUser!.bankDetails.first;
+        // Update local model
+        bank.nameAsBank = accountHolderController.text.trim();
+        bank.bankName = bankNameController.text.trim();
+        bank.accountNo = accountNumberController.text.trim();
+        bank.ifscCode = ifscController.text.trim();
+        bank.branchName = branchController.text.trim();
+        bank.panCard = panController.text.trim();
+        bank.aadharCard = aadharController.text.trim();
 
-        bank.nameAsBank = accountHolderController.text;
+        // Update image paths if backend returns them
+        if (value['data'] != null) {
+          if (value['data']['pan_img'] != null) {
+            bank.panImg = value['data']['pan_img'];
+            panCardImageUrl =
+            "${AppConfig.imageBaseURL}storage/${bank.panImg}";
+          }
 
-        bank.bankName = bankNameController.text;
+          if (value['data']['aadhar_img'] != null) {
+            bank.aadharImg = value['data']['aadhar_img'];
+            aadharCardImageUrl =
+            "${AppConfig.imageBaseURL}storage/${bank.aadharImg}";
+          }
+        }
 
-        bank.accountNo = accountNumberController.text;
+        // Clear picked files after successful upload
+        panCardImageFile = null;
+        aadharCardImageFile = null;
 
-        bank.ifscCode = ifscController.text;
-
-        bank.branchName = branchController.text;
-
-        bank.panCard = panController.text;
-
-        bank.aadharCard = aadharController.text;
-
+        // Save updated user
         AppStorage.instance.setUserData(currentUser!);
 
-        Toast.success(message: value['message']);
-
-        isContactEditing = false;
+        isBankEditing = false;
 
         update();
+
+        Toast.success(message: value['message']);
+      } else {
+        Toast.error(message: value['message']);
       }
+    })
+        .catchError((e) {
+      Loader.hideLoader();
+      Toast.error(message: e.toString());
     });
   }
 
