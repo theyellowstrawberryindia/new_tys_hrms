@@ -57,7 +57,7 @@ class AppStorage {
     _storage.erase();
   }
 
-  void setUserData(CurrentUser user) async {
+  Future<void> setUserData(CurrentUser user) async {
     await _storage.write(StorageKey.userData, user.toJson());
   }
   CurrentUser getUserData() {

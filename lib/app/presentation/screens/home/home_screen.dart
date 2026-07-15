@@ -212,9 +212,9 @@ class HomeScreen extends GetView<HomeController> {
 
                         /// LOCATION
                         Text(
-                          controller.isOfficeEmployee
+                          controller.isUserLoaded
                               ? controller.officeDistance
-                              : "Work Location : Remote",
+                              : "Checking Work Location...",
                           style: AppTheme.textStyle(
                             size: 14,
                               color: controller.locationColor,
