@@ -85,7 +85,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   bool isButtonPressed = false;
 
-
   /// STATS CARD ANIMATION
   ///
 
@@ -97,8 +96,16 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   late Animation<double> totalHourRotation;
 
-
   late Animation<double> cardElevation;
+
+  bool isOpeningCamera = false;
+
+  bool isUserLoaded = false;
+
+  bool _isOfficeEmployee = false;
+
+  bool get isOfficeEmployee => _isOfficeEmployee;
+
 
   bool get shouldShowCheckoutConfirmation {
     return isCheckedIn;
@@ -116,10 +123,10 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     return "Are you ready to check-out at this time?";
   }
 
-  bool get isOfficeEmployee {
-    return currentUser?.data.first.workLocation?.toLowerCase().trim() ==
-        "office";
-  }
+  // bool get isOfficeEmployee {
+  //   return currentUser?.data.first.workLocation?.toLowerCase().trim() ==
+  //       "office";
+  // }
 
   @override
   void onInit() {
@@ -151,6 +158,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   /// Refresh
   Future<void> refreshHome() async {
+    await positionStream?.cancel();
     await startLocationListener();
     _getUser();
   }
@@ -184,50 +192,28 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       duration: const Duration(milliseconds: 900),
     );
 
-    clockInRotation = Tween<double>(
-      begin: -.08,
-      end: .08,
-    ).animate(
+    clockInRotation = Tween<double>(begin: -.08, end: .08).animate(
       CurvedAnimation(
         parent: statsIconController,
-        curve: const Interval(
-          0.0,
-          .35,
-          curve: Curves.easeInOut,
-        ),
+        curve: const Interval(0.0, .35, curve: Curves.easeInOut),
       ),
     );
 
-    clockOutRotation = Tween<double>(
-      begin: -.08,
-      end: .08,
-    ).animate(
+    clockOutRotation = Tween<double>(begin: -.08, end: .08).animate(
       CurvedAnimation(
         parent: statsIconController,
-        curve: const Interval(
-          .20,
-          .60,
-          curve: Curves.easeInOut,
-        ),
+        curve: const Interval(.20, .60, curve: Curves.easeInOut),
       ),
     );
 
-    totalHourRotation = Tween<double>(
-      begin: -.08,
-      end: .08,
-    ).animate(
+    totalHourRotation = Tween<double>(begin: -.08, end: .08).animate(
       CurvedAnimation(
         parent: statsIconController,
-        curve: const Interval(
-          .45,
-          1,
-          curve: Curves.easeInOut,
-        ),
+        curve: const Interval(.45, 1, curve: Curves.easeInOut),
       ),
     );
 
     _startStatsAnimation();
-
   }
 
   Future<void> startPulse() async {
@@ -247,12 +233,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   }
 
   Future<void> _startStatsAnimation() async {
-
     while (!isClosed) {
-
-      await Future.delayed(
-        const Duration(seconds: 4),
-      );
+      await Future.delayed(const Duration(seconds: 4));
 
       if (isClosed) break;
 
@@ -262,23 +244,28 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-
   void onButtonTapDown() {
+    if (isButtonPressed) {
+      return;
+    }
+
     isButtonPressed = true;
 
     buttonPressController.forward();
   }
 
-  Future<void> onButtonTapUp() async {
+  void onButtonTapUp() {
+    if (!isButtonPressed) {
+      return;
+    }
+
     isButtonPressed = false;
 
-    await buttonPressController.forward();
-    await buttonPressController.reverse();
+    /// Restore button immediately.
+    buttonPressController.reverse();
 
-    await pulseController.forward();
-    await pulseController.reverse();
-
-    await createAttendance();
+    /// Open camera immediately.
+    createAttendance();
   }
 
   void onButtonTapCancel() {
@@ -411,7 +398,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   /// START LOCATION LISTENER
   Future<void> startLocationListener() async {
     try {
-      final hasPermission = await LocationService.handlePermission();
+      final hasPermission =
+      await LocationService.handlePermission();
 
       if (!hasPermission) {
         officeDistance = "Location permission denied";
@@ -421,63 +409,40 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         return;
       }
 
-      positionStream = LocationService.getPositionStream().listen((
-        Position position,
-      ) async {
-        currentPosition = position;
+      /// IMPORTANT:
+      /// Prevent multiple subscriptions when pull-to-refresh is used.
+      await positionStream?.cancel();
 
-        /// PRINT CURRENT LOCATION
-        AppUtils.printMessage("Latitude : ${position.latitude}");
+      positionStream =
+          LocationService.getPositionStream().listen(
+                (Position position) async {
+              currentPosition = position;
 
-        AppUtils.printMessage("Longitude : ${position.longitude}");
+              currentAddress =
+              await LocationService.getAddressFromLatLng(
+                latitude: position.latitude,
+                longitude: position.longitude,
+              );
 
-        AppUtils.printMessage("Accuracy : ${position.accuracy}");
+              /// If user hasn't loaded yet, don't mark them Remote.
+              if (!isUserLoaded) {
+                officeDistance = "Checking Work Location...";
 
-        AppUtils.printMessage("Speed : ${position.speed}");
+                canClockIn = false;
 
-        /// ADDRESS
-        currentAddress = await LocationService.getAddressFromLatLng(
-          latitude: position.latitude,
-          longitude: position.longitude,
-        );
+                update();
 
-        AppUtils.printMessage("Current Address : $currentAddress");
+                return;
+              }
 
-        /// DISTANCE
-        final distance = LocationService.calculateDistance(
-          startLatitude: position.latitude,
+              await _updateCurrentLocationState();
+            },
+            onError: (error) {
+              officeDistance = "Unable to fetch location";
 
-          startLongitude: position.longitude,
-
-          endLatitude: officeLat,
-
-          endLongitude: officeLng,
-        );
-
-        AppUtils.printMessage(
-          "Distance From Office : ${distance.toStringAsFixed(1)} meter",
-        );
-
-        if (isOfficeEmployee) {
-          officeDistance =
-              "You are ${distance.toStringAsFixed(1)} meter away from office";
-        } else {
-          officeDistance = "Remote Working Location";
-        }
-
-        /// 50 METER RADIUS
-        isInsideOfficeRadius = distance <= 50;
-
-        /// OFFICE EMPLOYEE => 50 meter rule
-        /// REMOTE EMPLOYEE => anywhere
-        canClockIn = isOfficeEmployee ? distance <= 50 : true;
-
-        AppUtils.printMessage("Inside Office Radius : $isInsideOfficeRadius");
-
-        AppUtils.printMessage("Can Clock In : $canClockIn");
-
-        update();
-      });
+              update();
+            },
+          );
     } catch (e) {
       officeDistance = "Unable to fetch location";
 
@@ -488,11 +453,33 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   /// CREATE ATTENDANCE
 
   Future<void> createAttendance() async {
+    if (isOpeningCamera) {
+      return;
+    }
+
     try {
+      /// USER MUST BE AVAILABLE FIRST
+      if (currentUser == null || currentUser!.data.isEmpty) {
+        Toast.error(message: "User information is loading. Please try again.");
+
+        return;
+      }
+
+      /// LOCATION MUST BE AVAILABLE FOR OFFICE EMPLOYEE
+      if (isOfficeEmployee && currentPosition == null) {
+        Toast.error(
+          message: "Getting your current location. Please try again.",
+        );
+
+        return;
+      }
+
+      /// OFFICE EMPLOYEE LOCATION VALIDATION
       if (isOfficeEmployee && !canClockIn) {
         Toast.error(
           message: "You must be within 50 meters of the office to check in",
         );
+
         return;
       }
 
@@ -500,15 +487,12 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (shouldShowCheckoutConfirmation) {
         final bool confirm = await CommonConfirmationDialog.show(
           title: "Attendance",
-
           message: attendanceConfirmationMessage,
-
           description:
-              "You have completed ${totalHours == '00:00' ? getWorkedHours() : totalHours} for the day.",
-
+              "You have completed "
+              "${totalHours == '00:00' ? getWorkedHours() : totalHours} "
+              "for the day.",
           positiveText: isCheckedOut ? "Update" : "Check-out",
-
-          //icon: Icons.access_time,
           positiveColor: AppColor.kCheckOutRed_1,
         );
 
@@ -517,28 +501,30 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         }
       }
 
-      /// OPEN CAMERA
-      final dynamic result = await Get.to(() => const AttendanceCameraScreen());
+      isOpeningCamera = true;
 
-      if (result == null) {
-        Toast.error(message: "Selfie capture cancelled");
+      /// OPEN CAMERA IMMEDIATELY
+      final File? image = await Get.to<File>(
+        () => const AttendanceCameraScreen(),
+      );
+
+      isOpeningCamera = false;
+
+      if (image == null) {
         return;
       }
 
-      final File image = result as File;
-
       Loader.showLoader();
 
-      /// DEVICE INFO
       final deviceInfo = await DeviceInfoService.getDeviceData();
 
-      Map<String, String> body = {
-        "email": currentUser?.data.first.email ?? "",
+      final Map<String, String> body = {
+        "email": currentUser!.data.first.email,
         "current_address": currentAddress,
-        "latitude": "${currentPosition?.latitude}",
-        "longitude": "${currentPosition?.longitude}",
-        "device_os": deviceInfo["device_os"],
-        "device_name": deviceInfo["device_name"],
+        "latitude": "${currentPosition?.latitude ?? ""}",
+        "longitude": "${currentPosition?.longitude ?? ""}",
+        "device_os": deviceInfo["device_os"] ?? "",
+        "device_name": deviceInfo["device_name"] ?? "",
         "ip_address": "",
       };
 
@@ -546,17 +532,14 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
       Loader.hideLoader();
 
-      ///Update UI
       updateAttendanceUI(response);
 
-      /// POPUP
       if (response["data"] != null && response["data"].isNotEmpty) {
         final data = response["data"][0];
 
         if (data["out_time"] == "00:00:00") {
           CommonAttendancePopup.show(
             isLate: data["is_late"] == 1,
-
             time: data["in_time"],
           );
         }
@@ -566,36 +549,103 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         message: response["message"] ?? "Attendance marked successfully",
       );
     } catch (e) {
+      isOpeningCamera = false;
+
       Loader.hideLoader();
+
       Toast.error(message: e.toString());
     }
   }
 
-  /// GET USER
-  void _getUser() {
-    Loader.showLoader();
-    homeRepository.getUser().then(
-      (value) {
-        Loader.hideLoader();
-        currentUser = CurrentUser.fromJson(value);
-        AppStorage.instance.setUserData(currentUser!);
+  void _updateEmployeeWorkLocation() {
+    if (currentUser == null || currentUser!.data.isEmpty) {
+      isUserLoaded = false;
+      _isOfficeEmployee = false;
 
-        ///Refresh user
-        if (Get.isRegistered<ProfileController>()) {
-          Get.find<ProfileController>().loadCurrentUser();
-        }
-        AppUtils.printMessage(
-          "Get User - ${currentUser!.data.first.firstName}",
-        );
+      return;
+    }
 
-        /// call Post token
-        _postToken();
-      },
-      onError: (e) {
-        Loader.hideLoader();
-        Toast.error(message: e);
-      },
+    isUserLoaded = true;
+
+    final workLocation =
+        currentUser!.data.first.workLocation?.trim().toLowerCase() ?? "";
+
+    _isOfficeEmployee = workLocation == "office";
+
+    AppUtils.printMessage(
+      "Employee Work Location : $workLocation",
     );
+
+    AppUtils.printMessage(
+      "Is Office Employee : $_isOfficeEmployee",
+    );
+  }
+
+  Future<void> _updateCurrentLocationState() async {
+    final position = currentPosition;
+
+    if (position == null) {
+      return;
+    }
+
+    final distance = LocationService.calculateDistance(
+      startLatitude: position.latitude,
+      startLongitude: position.longitude,
+      endLatitude: officeLat,
+      endLongitude: officeLng,
+    );
+
+    isInsideOfficeRadius = distance <= 50;
+
+    if (isOfficeEmployee) {
+      officeDistance =
+      "You are ${distance.toStringAsFixed(1)} meter away from office";
+
+      canClockIn = isInsideOfficeRadius;
+    } else {
+      officeDistance = "Remote Working Location";
+
+      canClockIn = true;
+    }
+
+    update();
+  }
+
+  /// GET USER
+  Future<void> _getUser() async {
+    try {
+      Loader.showLoader();
+
+      final value = await homeRepository.getUser();
+
+      currentUser = CurrentUser.fromJson(value);
+
+      /// SET WORK LOCATION IMMEDIATELY
+      _updateEmployeeWorkLocation();
+
+      await AppStorage.instance.setUserData(currentUser!);
+
+
+      if (Get.isRegistered<ProfileController>()) {
+        Get.find<ProfileController>().loadCurrentUser();
+      }
+
+      AppUtils.printMessage(
+        "Get User - ${currentUser!.data.first.firstName}",
+      );
+
+      /// Recalculate location using current known position.
+      await _updateCurrentLocationState();
+
+      update();
+
+      /// Don't block HomeScreen for token API.
+      unawaited(_postToken());
+    } catch (e) {
+      Toast.error(message: e.toString());
+    } finally {
+      Loader.hideLoader();
+    }
   }
 
   void _getTodaysAttendance() {
@@ -660,12 +710,12 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       "os_version": deviceInfo["os_version"],
     };
 
-    Loader.showLoader();
+    //Loader.showLoader();
     homeRepository
         .postToken(body)
         .then(
           (value) {
-            Loader.hideLoader();
+            //Loader.hideLoader();
             AppUtils.printMessage("Token sent");
           },
           onError: (e) {
