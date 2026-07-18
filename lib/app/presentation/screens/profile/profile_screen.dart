@@ -26,13 +26,7 @@ class ProfileScreen extends GetView<ProfileController> {
 
             child: Column(
               children: [
-                // /// TITLE
-                // Text(
-                //   "Profile",
-                //   style: AppTheme.textStyle(size: 24, weight: FontWeight.w700),
-                // ),
-                //
-                // const SizedBox(height: 25),
+
 
                 /// PROFILE IMAGE
                 Stack(
@@ -199,6 +193,13 @@ class ProfileScreen extends GetView<ProfileController> {
                     ),
                     _menuCard(
                       context,
+                      title: "Work Experience",
+                      icon: AssetPath.workExperience,
+                      onTap: controller.openWorkExperience,
+                    ),
+
+                    _menuCard(
+                      context,
                       title: "Project",
                       icon: AssetPath.projectDetails,
                       onTap: controller.openProject,
@@ -306,6 +307,8 @@ class ProfileScreen extends GetView<ProfileController> {
 
                 const SizedBox(height: 60),
 
+                const SizedBox(height: 10),
+
                 Text(
                   "FOLLOW US ON",
                   style: AppTheme.textStyle(color: AppColor.kGrayTextColor),
@@ -346,6 +349,11 @@ class ProfileScreen extends GetView<ProfileController> {
                   ],
                 ),
 
+                const SizedBox(height: 20),
+                Text(
+                  controller.appVersion,
+                  style: AppTheme.textStyle(color: AppColor.kGrayTextColor),
+                ),
                 const SizedBox(height: 20),
               ],
             ),

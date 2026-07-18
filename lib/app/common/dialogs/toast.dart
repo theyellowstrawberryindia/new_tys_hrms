@@ -10,6 +10,8 @@ import 'package:hrms_ys/app/packages.dart';
 import '../../widgets/label.dart';
 
 class Toast {
+  Toast(String s, String t);
+
   static success({required String message}) {
     _private(message, Colors.green, Icons.check_circle_outline_rounded);
   }

@@ -1,34 +1,26 @@
-/*
- *  Created by Yellow Strawberry LLP on xx/xx/26
- *  Copyright (c) 2026. All rights reserved.
- *
- */
-
-import '../../../data/controllers/education_controller.dart';
+import '../../../data/controllers/project_details_controller.dart';
 import '../../../packages.dart';
 import '../../../widgets/common_button.dart';
 import '../../../widgets/common_confirmation_dialog.dart';
 import '../../../widgets/profile_detail_field.dart';
 import 'profile_detail_screen.dart';
 
-class EducationDetailsScreen extends GetView<EducationDetailsController> {
-  const EducationDetailsScreen({super.key});
+class ProjectDetailsScreen extends GetView<ProjectDetailsController> {
+  const ProjectDetailsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<EducationDetailsController>(
+    return GetBuilder<ProjectDetailsController>(
       builder: (controller) {
         return PopScope(
           canPop: !controller.isEditing,
-
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
 
             controller.cancelEdit();
           },
-
           child: ProfileDetailScreen(
-            title: "Education",
+            title: "Projects",
             isEditing: controller.isEditing,
             showActionButton: true,
             wrapInCard: false,
@@ -39,11 +31,9 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                 Get.back();
               }
             },
-
             onEditSave: () {
               if (controller.isEditing) {
-                if (!controller.validateEducationFields()) {
-                  // Just surface inline field errors, no toast, and don't proceed.
+                if (!controller.validateProjectFields()) {
                   controller.showValidationErrors = true;
                   controller.update();
                   return;
@@ -53,26 +43,24 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
 
                 CommonConfirmationDialog.show(
                   title: "Save Changes",
-                  message: "Save changes to your education details?",
+                  message: "Save changes to your project details?",
                   positiveText: "Save",
                   negativeText: "Cancel",
                 ).then((confirmed) {
                   if (confirmed) {
-                    controller.saveEducation();
+                    controller.saveProjects();
                   }
                 });
               } else {
                 controller.enableEdit();
               }
             },
-
             fields: [
-              ...List.generate(controller.courseControllers.length, (index) {
+              ...List.generate(controller.titleControllers.length, (index) {
                 final bool canDelete = controller.isEditing;
 
-
                 final bool isNewEntry =
-                    index >= controller.currentUser!.education.length;
+                    index >= controller.currentUser!.projects.length;
 
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -81,7 +69,9 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                     margin: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Theme.of(context).primaryColor),
+                      side: BorderSide(
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
                     child: Theme(
                       data: Theme.of(context).copyWith(
@@ -91,23 +81,24 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                       ),
                       child: ExpansionTile(
                         key: ValueKey(index),
-                        initiallyExpanded: controller.expandedIndex == index,
-
+                        initiallyExpanded:
+                        controller.expandedIndex == index,
                         onExpansionChanged: (expanded) {
                           controller.toggleExpansion(index, expanded);
                         },
-
-                        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-
+                        tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         title: Text(
-                          controller.courseControllers[index].text.trim().isEmpty
-                              ? "New Education"
-                              : controller.courseControllers[index].text,
+                          controller.titleControllers[index].text.trim().isEmpty
+                              ? "New Project Details"
+                              : controller.titleControllers[index].text,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTheme.textStyle(weight: FontWeight.w600),
+                          style: AppTheme.textStyle(
+                            weight: FontWeight.w600,
+                          ),
                         ),
-
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -123,30 +114,26 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                                 ),
                                 onPressed: () async {
                                   if (isNewEntry) {
-                                    // Not persisted yet — just remove the
-                                    // tile locally, no confirmation needed.
-                                    controller.removeNewEducation(index);
+                                    controller.removeNewProject(index);
                                     return;
                                   }
 
                                   final confirmed =
                                   await CommonConfirmationDialog.show(
-                                    title: "Delete Education",
+                                    title: "Delete Project",
                                     message:
-                                    "Are you sure you want to delete this education entry?",
+                                    "Are you sure you want to delete this project?",
                                     positiveText: "Delete",
                                     negativeText: "Cancel",
                                     positiveColor: Colors.red,
                                   );
 
                                   if (confirmed) {
-                                    controller.deleteEducation(index);
+                                    controller.deleteProject(index);
                                   }
                                 },
                               ),
-
                             const SizedBox(width: 4),
-
                             Icon(
                               controller.expandedIndex == index
                                   ? Icons.expand_less
@@ -154,52 +141,47 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                             ),
                           ],
                         ),
-
-                        childrenPadding:
-                        const EdgeInsets.fromLTRB(16, 0, 16, 16),
-
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          16,
+                          0,
+                          16,
+                          16,
+                        ),
                         children: [
                           ProfileDetailField(
-                            title: "Course Name",
+                            title: "Project Title",
                             maxLength: 100,
                             minLength: 2,
-                            forceValidate: controller.showValidationErrors,
-                            controller: controller.courseControllers[index],
+                            controller: controller.titleControllers[index],
                             readOnly: !controller.isEditing,
+                            forceValidate: controller.showValidationErrors,
                           ),
-
                           ProfileDetailField(
-                            title: "University",
+                            title: "Project Description",
                             maxLength: 100,
                             minLength: 2,
+                            controller:
+                            controller.descriptionControllers[index],
+                            readOnly: !controller.isEditing,
                             forceValidate: controller.showValidationErrors,
-                            controller: controller.universityControllers[index],
-                            readOnly: !controller.isEditing,
                           ),
-
-                          ProfileDetailField(
-                            title: "Grade",
-                            controller: controller.gradeControllers[index],
-                            readOnly: !controller.isEditing,
-                          ),
-
                           ProfileDetailField(
                             title: "Start Date",
-                            controller: controller.startDateControllers[index],
+                            controller:
+                            controller.startDateControllers[index],
                             readOnly: !controller.isEditing,
-                            forceValidate: controller.showValidationErrors,
                             isDateField: true,
+                            forceValidate: controller.showValidationErrors,
                             onTap: controller.isEditing
                                 ? () => controller.pickStartDate(index)
                                 : null,
                           ),
-
                           ProfileDetailField(
                             title: "End Date",
-                            forceValidate: controller.showValidationErrors,
                             controller: controller.endDateControllers[index],
                             readOnly: !controller.isEditing,
                             isDateField: true,
+                            forceValidate: controller.showValidationErrors,
                             onTap: controller.isEditing
                                 ? () => controller.pickEndDate(index)
                                 : null,
@@ -210,16 +192,14 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                   ),
                 );
               }),
-
               if (controller.isEditing)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   child: CommonButton(
-                    text: "Add Education",
-                    onTap: controller.newEducation,
+                    text: "Add Project",
+                    onTap: controller.newProject,
                   ),
                 ),
-
               const SizedBox(height: 16),
             ],
           ),

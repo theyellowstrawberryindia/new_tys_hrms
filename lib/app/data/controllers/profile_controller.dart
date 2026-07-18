@@ -6,12 +6,15 @@
  */
 import 'package:hrms_ys/app/core/utils/app_storage.dart';
 import 'package:hrms_ys/app/data/bindings/auth_binding.dart';
+import 'package:hrms_ys/app/data/bindings/project_details_binding.dart';
+import 'package:hrms_ys/app/data/bindings/work_experience_binding.dart';
 import 'package:hrms_ys/app/data/repository/profile_repository.dart';
 import 'package:hrms_ys/app/presentation/screens/attendance/apply_leave_screen.dart';
 import 'package:hrms_ys/app/presentation/screens/auth/auth_screen.dart';
 import 'package:hrms_ys/app/presentation/screens/update/holiday_screen.dart';
 import 'package:hrms_ys/app/presentation/screens/update/notification_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../packages.dart';
 import 'dart:io';
@@ -26,6 +29,8 @@ import '../../presentation/screens/profile/family_screen.dart';
 import '../../presentation/screens/profile/idcard_screen.dart';
 import '../../presentation/screens/profile/personal_screen.dart';
 import '../../presentation/screens/profile/professional_screen.dart';
+import '../../presentation/screens/profile/project_details_screen.dart';
+import '../../presentation/screens/profile/work_experience_screen.dart';
 import '../../widgets/common_confirmation_dialog.dart';
 import '../../widgets/common_image_preview.dart';
 import '../../widgets/pdf_preview_screen.dart';
@@ -96,6 +101,15 @@ class ProfileController extends GetxController {
   final familyAddressController = TextEditingController();
 
   bool _loaded = false;
+  String appVersion = "";
+
+
+  Future<void> loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+
+    appVersion = "Version ${info.version}";
+    update();
+  }
 
   void toggleNotification() {
     isNotificationEnabled = !isNotificationEnabled;
@@ -113,6 +127,7 @@ class ProfileController extends GetxController {
 
   @override
   void onInit() {
+    loadAppVersion();
     super.onInit();
   }
 
@@ -208,8 +223,8 @@ class ProfileController extends GetxController {
     } else {
       dobController.clear();
     }
+    genderController.text = formatGender(personal?.gender);
 
-    genderController.text = personal?.gender ?? "";
 
     bloodGroupController.text = "NA";
 
@@ -464,8 +479,20 @@ class ProfileController extends GetxController {
 
   void openProject() {
     loadCurrentUser();
+    Get.to(
+          () => const ProjectDetailsScreen(),
+      binding: ProjectDetailsBinding(),
+    );
 
-    Get.to(() => const ContactScreen());
+  }
+
+  void openWorkExperience() {
+    loadCurrentUser();
+    Get.to(
+          () => const WorkExperienceScreen(),
+      binding: WorkExperienceBinding(),
+    );
+
   }
 
   void notificationSetting() {
@@ -544,7 +571,6 @@ class ProfileController extends GetxController {
         //personal.dob = dobController.text;
 
         personal.gender = genderController.text;
-
         // personal.bloodGroup =
         //     bloodGroupController.text;
         //
@@ -726,4 +752,20 @@ class ProfileController extends GetxController {
       Get.offAll(AuthScreen(), binding: AuthBinding());
     }
   }
+  String formatGender(String? gender) {
+    switch (gender?.toUpperCase()) {
+      case "ML":
+        return "Male";
+
+      case "FL":
+        return "Female";
+
+      case "OT":
+        return "Other";
+
+      default:
+        return gender ?? "-";
+    }
+  }
+
 }

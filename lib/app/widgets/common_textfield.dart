@@ -1,10 +1,3 @@
-/*
- *  Created by Yellow Strawberry LLP on 23/05/26, 1:55 pm
- *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 23/05/26, 1:55 pm
- *
- */
-
 import '../packages.dart';
 
 class CommonTextField extends StatelessWidget {
@@ -18,16 +11,23 @@ class CommonTextField extends StatelessWidget {
   final String? Function(String?)? validator;
 
   final Widget? prefixIcon;
-
   final Widget? suffixIcon;
 
   final VoidCallback? onSuffixTap;
-
   final VoidCallback? onPrefixTap;
 
   final bool readOnly;
-
   final VoidCallback? onTap;
+
+  final int? maxLength;
+
+  final bool isDateField;
+
+  final bool? showCursor;
+
+
+
+  final bool? styleReadOnly;
 
   const CommonTextField({
     super.key,
@@ -45,39 +45,38 @@ class CommonTextField extends StatelessWidget {
     this.onPrefixTap,
     this.readOnly = false,
     this.onTap,
+    this.maxLength,
+    this.isDateField = false,
+    this.showCursor = true,
+    this.styleReadOnly,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isStyleReadOnly = styleReadOnly ?? readOnly;
+
     return TextFormField(
       controller: controller,
-
       focusNode: focusNode,
-
       validator: validator,
-
+      textCapitalization: TextCapitalization.sentences,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-
       obscureText: isPassword ? !isPasswordVisible : false,
-
       style: AppTheme.textStyle(),
-
       cursorColor: AppColor.kPrimaryColor,
-
       readOnly: readOnly,
-
       onTap: onTap,
+      maxLength: maxLength,
+      showCursor: isDateField ? false : showCursor,
 
       decoration: InputDecoration(
         hintText: hintText,
-
+        counterText: "",
         hintStyle: AppTheme.textStyle(color: Colors.grey),
-
         errorStyle: AppTheme.textStyle(color: Colors.red, size: 12),
 
         filled: true,
-
-        fillColor: readOnly
+        fillColor: isStyleReadOnly
             ? (Get.isDarkMode ? Colors.grey.shade800 : const Color(0xFFEDEDED))
             : (Get.isDarkMode ? const Color(0xFF2C2C2C) : Colors.white),
 
@@ -94,47 +93,42 @@ class CommonTextField extends StatelessWidget {
             ? GestureDetector(onTap: onSuffixTap, child: suffixIcon)
             : isPassword
             ? GestureDetector(
-                onTap: onEyeTap,
-                child: Icon(
-                  isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.grey,
-                ),
-              )
+          onTap: onEyeTap,
+          child: Icon(
+            isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+            color: Colors.grey,
+          ),
+        )
             : null,
+
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(35),
-
           borderSide: BorderSide.none,
         ),
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(35),
-
           borderSide: BorderSide(
-            color: readOnly ? Colors.grey.shade300 : AppColor.kPrimaryColor,
+            color: isStyleReadOnly ? Colors.grey.shade300 : AppColor.kPrimaryColor,
             width: 1,
           ),
         ),
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(35),
-
           borderSide: BorderSide(
             color: isFocused ? Colors.orange : Colors.grey.shade300,
-
             width: 1.5,
           ),
         ),
 
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(35),
-
           borderSide: const BorderSide(color: Colors.red, width: 1.2),
         ),
 
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(35),
-
           borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),

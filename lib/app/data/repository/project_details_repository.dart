@@ -1,6 +1,7 @@
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
-class EducationRepository {
+
+class ProjectDetailsRepository {
   Future<dynamic> getUser() async {
     try {
       final response = await ApiClient.client.get(
@@ -13,10 +14,10 @@ class EducationRepository {
     }
   }
 
-  Future<dynamic> addEducation(dynamic body) async {
+  Future<dynamic> addProject(dynamic body) async {
     try {
       final response = await ApiClient.client.post(
-        APIEndpoints.addEducation,
+        APIEndpoints.addProject,
         body,
       );
       return response;
@@ -25,10 +26,10 @@ class EducationRepository {
     }
   }
 
-  Future<dynamic> updateEducation(dynamic body) async {
+  Future<dynamic> updateProjects(dynamic body) async {
     try {
       final response = await ApiClient.client.put(
-        APIEndpoints.editEducation,
+        APIEndpoints.editProject,
         body,
       );
       return response;
@@ -37,10 +38,10 @@ class EducationRepository {
     }
   }
 
-  Future<dynamic> deleteEducation(dynamic body) async {
+  Future<dynamic> deleteProject(dynamic body) async {
     try {
       final response = await ApiClient.client.delete(
-        APIEndpoints.deleteEducation,
+        APIEndpoints.deleteProject,
         body: body,
       );
       return response;

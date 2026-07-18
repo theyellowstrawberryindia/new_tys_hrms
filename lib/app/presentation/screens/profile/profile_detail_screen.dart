@@ -18,6 +18,7 @@ class ProfileDetailScreen extends StatelessWidget {
   final bool wrapInCard;
 
   final VoidCallback? onEditSave;
+  final VoidCallback? onBack;
 
   final List<Widget> fields;
 
@@ -32,20 +33,21 @@ class ProfileDetailScreen extends StatelessWidget {
     this.onEditSave,
     this.showActionButton = true,
     this.wrapInCard = true,
-
+    this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
 
-      appBar: CommonAppBar(
-        title: title,
+      appBar:
+      CommonAppBar(
 
+        title: title,
+        onBack: onBack,
         action: showActionButton
             ? TextButton(
           onPressed: onEditSave,
-
           child: Text(
             isEditing ? "Save" : "Edit",
             style: AppTheme.textStyle(

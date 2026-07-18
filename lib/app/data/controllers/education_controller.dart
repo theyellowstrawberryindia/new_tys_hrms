@@ -13,8 +13,10 @@ class EducationDetailsController extends GetxController {
   final EducationRepository educationRepository = EducationRepository();
 
   CurrentUser? currentUser;
+  bool showValidationErrors = false;
 
   bool isEditing = false;
+  int expandedIndex = -1;
 
   /// Controllers for all education entries
   final List<TextEditingController> courseControllers = [];
@@ -41,16 +43,27 @@ class EducationDetailsController extends GetxController {
     endDateControllers.clear();
 
     for (final education in currentUser!.education) {
-      courseControllers.add(
-        TextEditingController(text: education.courseName),
+
+      final courseController = TextEditingController(
+        text: education.courseName,
       );
 
+      courseController.addListener(() {
+        update();
+      });
+
+      courseControllers.add(courseController);
+
       universityControllers.add(
-        TextEditingController(text: education.universityName),
+        TextEditingController(
+          text: education.universityName,
+        ),
       );
 
       gradeControllers.add(
-        TextEditingController(text: education.grade),
+        TextEditingController(
+          text: education.grade,
+        ),
       );
 
       startDateControllers.add(
@@ -73,16 +86,142 @@ class EducationDetailsController extends GetxController {
     isEditing = true;
     update();
   }
+  void newEducation() {
+    showValidationErrors = false;
 
-  void addEducation() {
-    courseControllers.add(TextEditingController());
+    final controller = TextEditingController();
+
+    controller.addListener(() {
+      update();
+    });
+
+    courseControllers.add(controller);
     universityControllers.add(TextEditingController());
     gradeControllers.add(TextEditingController());
     startDateControllers.add(TextEditingController());
     endDateControllers.add(TextEditingController());
 
+    expandedIndex = courseControllers.length - 1;
+
     update();
   }
+
+  Future<void> refreshCurrentUser() async {
+    try {
+      final response = await educationRepository.getUser();
+
+      log(
+        "Refresh Current User Response => ${jsonEncode(response)}",
+      );
+
+      if (response["success"] == true) {
+        final CurrentUser updatedUser = CurrentUser.fromJson(
+          Map<String, dynamic>.from(response),
+        );
+
+        await AppStorage.instance.setUserData(updatedUser);
+
+        currentUser = updatedUser;
+
+        loadCurrentUser();
+      } else {
+        throw Exception(
+          response["message"] ?? "Failed to refresh user details.",
+        );
+      }
+    } catch (e, s) {
+      log("Refresh Current User Error => $e");
+      log(s.toString());
+
+      rethrow;
+    }
+  }
+
+  Future<void> addEducation() async {
+    try {
+      String formatApiDate(String date) {
+        return DateFormat(
+          'yyyy-MM-dd',
+        ).format(
+          DateFormat('dd MMM yyyy').parse(date),
+        );
+      }
+
+      // Only newly added education entries
+      for (
+      int i = currentUser!.education.length;
+      i < courseControllers.length;
+      i++
+      ) {
+        final body = {
+          "userid": currentUser!.data.first.userid.toString(),
+          "university_name": universityControllers[i].text.trim(),
+          "course_name": courseControllers[i].text.trim(),
+          "start_date": formatApiDate(startDateControllers[i].text),
+          "end_date": formatApiDate(endDateControllers[i].text),
+          "grade": gradeControllers[i].text.trim(),
+        };
+
+        log("Add Education Request => ${jsonEncode(body)}");
+
+        final response = await educationRepository.addEducation(body);
+
+        log("Add Education Response => ${jsonEncode(response)}");
+
+        if (response["success"] != true) {
+          throw Exception(response["message"]);
+        }
+      }
+    } catch (e, s) {
+      log(e.toString());
+      log(s.toString());
+
+      rethrow;
+    }
+  }
+
+
+  Future<void> deleteEducation(int index) async {
+    Loader.showLoader();
+
+    try {
+      final body = {
+        "id": currentUser!.education[index].id,
+        "userid": currentUser!.data.first.userid.toString(),
+      };
+
+      log("Delete Education Request => ${jsonEncode(body)}");
+
+      final response = await educationRepository.deleteEducation(body);
+
+      log("Delete Education Response => ${jsonEncode(response)}");
+
+      if (response["success"] != true) {
+        throw Exception(response["message"]);
+      }
+
+      // Re-fetch from API and rebuild all controller lists cleanly —
+      // same pattern saveEducation() already uses, avoids manual
+      // dispose/removeAt index bookkeeping.
+      await refreshCurrentUser();
+
+      Loader.hideLoader();
+
+      Toast.success(
+        message: "Education deleted successfully.",
+      );
+    } catch (e, s) {
+      log("Delete Education Error => $e");
+      log(s.toString());
+
+      Loader.hideLoader();
+
+      Toast.error(
+        message: e.toString(),
+      );
+    }
+  }
+
 
   Future<void> pickStartDate(int index) async {
     DateTime initialDate = DateTime.now();
@@ -135,66 +274,136 @@ class EducationDetailsController extends GetxController {
     update();
   }
   Future<void> updateEducation() async {
-    Loader.showLoader();
-
     try {
-      final List<Map<String, dynamic>> educationList = [];
       String formatApiDate(String date) {
         return DateFormat(
           'yyyy-MM-dd',
-        ).format(DateFormat('dd MMM yyyy').parse(date));
+        ).format(
+          DateFormat('dd MMM yyyy').parse(date),
+        );
       }
 
-      for (int i = 0; i < courseControllers.length; i++) {
-        educationList.add({
-          "id": i < currentUser!.education.length
-              ? currentUser!.education[i].id
-              : null,
-          "userid": currentUser!.data.first.userid,
-          "course_name": courseControllers[i].text.trim(),
+      // Only update existing education entries
+      for (int i = 0; i < currentUser!.education.length; i++) {
+        final body = {
+          "id": currentUser!.education[i].id,
+          "userid": currentUser!.data.first.userid.toString(),
           "university_name": universityControllers[i].text.trim(),
-          "grade": gradeControllers[i].text.trim(),
+          "course_name": courseControllers[i].text.trim(),
           "start_date": formatApiDate(startDateControllers[i].text),
           "end_date": formatApiDate(endDateControllers[i].text),
-        });      }
+          "grade": gradeControllers[i].text.trim(),
+        };
 
-      final body = {
-        "userid": currentUser!.data.first.userid,
-        "first_name": currentUser!.data.first.firstName,
-        "last_name": currentUser!.data.first.lastName,
-        "email": currentUser!.data.first.email,
-        "phone_number": currentUser!.data.first.phoneNumber,
-        "status": currentUser!.data.first.status,
-        "work_location": currentUser!.data.first.workLocation,
-        "user_type": currentUser!.data.first.userType,
+        log("Update Education Request => ${jsonEncode(body)}");
 
-        "education": educationList,
-      };
-      log("Education Request => ${jsonEncode(body)}");
+        final response = await educationRepository.updateEducation(body);
 
-      final response = await educationRepository.updateEducation(body);
+        log("Update Education Response => ${jsonEncode(response)}");
 
-      Loader.hideLoader();
-
-      log("Education Response => ${jsonEncode(response)}");
-
-      if (response["success"] == true) {
-        isEditing = false;
-        update();
-
-        Toast.success(message: response["message"]);
-      } else {
-        Toast.error(message: response["message"]);
+        if (response["success"] != true) {
+          throw Exception(response["message"]);
+        }
       }
     } catch (e, s) {
-      Loader.hideLoader();
-
       log(e.toString());
       log(s.toString());
 
-      Toast.error(message: e.toString());
+      rethrow;
     }
-  }  @override
+  }
+
+  ///New Education field can be removed not existing
+  void removeNewEducation(int index) {
+    showValidationErrors = false;
+
+    if (index < currentUser!.education.length) return;
+
+    courseControllers[index].dispose();
+    universityControllers[index].dispose();
+    gradeControllers[index].dispose();
+    startDateControllers[index].dispose();
+    endDateControllers[index].dispose();
+
+    courseControllers.removeAt(index);
+    universityControllers.removeAt(index);
+    gradeControllers.removeAt(index);
+    startDateControllers.removeAt(index);
+    endDateControllers.removeAt(index);
+
+    update();
+  }
+
+
+  void toggleExpansion(int index, bool expanded) {
+    if (expanded) {
+      expandedIndex = index;
+    } else if (expandedIndex == index) {
+      expandedIndex = -1;
+    }
+
+    update();
+  }
+  void cancelEdit() {
+    if (!isEditing) return;
+
+    isEditing = false;
+    showValidationErrors = false;
+
+    loadCurrentUser();
+
+    update();
+  }
+
+  Future<void> saveEducation() async {
+    Loader.showLoader();
+
+    try {
+      await updateEducation();
+
+      await addEducation();
+
+      // Get latest user from API and update local storage
+      await refreshCurrentUser();
+
+      isEditing = false;
+
+      update();
+
+      Loader.hideLoader();
+
+      Toast.success(
+        message: "Education updated successfully.",
+      );
+    } catch (e, s) {
+      log("Save Education Error => $e");
+      log(s.toString());
+
+      Loader.hideLoader();
+
+      Toast.error(
+        message: e.toString(),
+      );
+    }
+  }
+
+  bool validateEducationFields() {
+    for (int i = 0; i < courseControllers.length; i++) {
+      final course = courseControllers[i].text.trim();
+      final university = universityControllers[i].text.trim();
+      final startDate = startDateControllers[i].text.trim();
+      final endDate = endDateControllers[i].text.trim();
+
+      if (course.length < 2 || course.length > 100) return false;
+      if (university.length < 2 || university.length > 100) return false;
+      if (startDate.isEmpty) return false;
+      if (endDate.isEmpty) return false;
+    }
+
+    return true;
+  }
+
+  @override
   void onClose() {
     for (final controller in courseControllers) {
       controller.dispose();

@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hrms_ys/app/core/core.dart';
 import 'package:hrms_ys/app/data/bindings/dashboard_binding.dart';
 import 'package:hrms_ys/app/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/utils/app_storage.dart';
 import '../../packages.dart';
@@ -29,6 +30,7 @@ class AuthController extends GetxController {
 
   @override
   void onInit() {
+    loadAppVersion();
     super.onInit();
 
     emailFocus.addListener(() {
@@ -63,6 +65,17 @@ class AuthController extends GetxController {
     passwordFocus.dispose();
 
     super.onClose();
+  }
+
+  /// APP VERSION
+  String appVersion = "";
+
+
+  Future<void> loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+
+    appVersion = "Version ${info.version}";
+    update();
   }
 
   /// TOGGLE PASSWORD

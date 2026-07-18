@@ -14,6 +14,7 @@ import '../../../widgets/common_textfield.dart';
 
 class AuthScreen extends GetView<AuthController> {
   const AuthScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,8 +217,15 @@ class AuthScreen extends GetView<AuthController> {
 
                                         url: "https://x.com/tysindia",
                                       ),
+
                                     ],
                                   ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    controller.appVersion,
+                                    style: AppTheme.textStyle(color: AppColor.kGrayTextColor),
+                                  ),
+                                  const SizedBox(height: 20),
                                 ],
                               ),
                             ),
