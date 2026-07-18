@@ -16,6 +16,8 @@ class EducationDetailsController extends GetxController {
   bool showValidationErrors = false;
 
   bool isEditing = false;
+  bool isAddPressed = false;
+  bool hasExistingFieldEdits = false;
   int expandedIndex = -1;
 
   /// Controllers for all education entries
@@ -84,10 +86,43 @@ class EducationDetailsController extends GetxController {
 
   void enableEdit() {
     isEditing = true;
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
+
+    final existingCount = currentUser!.education.length;
+
+    for (int i = 0; i < existingCount; i++) {
+      courseControllers[i].addListener(_markExistingFieldEdited);
+      universityControllers[i].addListener(_markExistingFieldEdited);
+      gradeControllers[i].addListener(_markExistingFieldEdited);
+      startDateControllers[i].addListener(_markExistingFieldEdited);
+      endDateControllers[i].addListener(_markExistingFieldEdited);
+    }
+
     update();
+  }
+
+  void _markExistingFieldEdited() {
+    if (!hasExistingFieldEdits) {
+      hasExistingFieldEdits = true;
+      update();
+    }
+  }
+
+  void _removeExistingFieldListeners() {
+    final existingCount = currentUser!.education.length;
+
+    for (int i = 0; i < existingCount; i++) {
+      courseControllers[i].removeListener(_markExistingFieldEdited);
+      universityControllers[i].removeListener(_markExistingFieldEdited);
+      gradeControllers[i].removeListener(_markExistingFieldEdited);
+      startDateControllers[i].removeListener(_markExistingFieldEdited);
+      endDateControllers[i].removeListener(_markExistingFieldEdited);
+    }
   }
   void newEducation() {
     showValidationErrors = false;
+    isAddPressed = true;
 
     final controller = TextEditingController();
 
@@ -348,13 +383,15 @@ class EducationDetailsController extends GetxController {
     if (!isEditing) return;
 
     isEditing = false;
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
     showValidationErrors = false;
+    _removeExistingFieldListeners();
 
     loadCurrentUser();
 
     update();
   }
-
   Future<void> saveEducation() async {
     Loader.showLoader();
 
@@ -363,27 +400,25 @@ class EducationDetailsController extends GetxController {
 
       await addEducation();
 
-      // Get latest user from API and update local storage
       await refreshCurrentUser();
 
+      _removeExistingFieldListeners();
       isEditing = false;
+      isAddPressed = false;
+      hasExistingFieldEdits = false;
 
       update();
 
       Loader.hideLoader();
 
-      Toast.success(
-        message: "Education updated successfully.",
-      );
+      Toast.success(message: "Education updated successfully.");
     } catch (e, s) {
       log("Save Education Error => $e");
       log(s.toString());
 
       Loader.hideLoader();
 
-      Toast.error(
-        message: e.toString(),
-      );
+      Toast.error(message: e.toString());
     }
   }
 

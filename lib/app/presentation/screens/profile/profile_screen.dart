@@ -263,6 +263,51 @@ class ProfileScreen extends GetView<ProfileController> {
 
                 const SizedBox(height: 20),
 
+                /// Privacy Policy
+                InkWell(
+                  onTap: controller.openPrivacyPolicy,
+
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 18,
+                    ),
+
+                    decoration: _cardDecoration(context),
+
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.privacy_tip_outlined,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Text(
+                          "Privacy Policy",
+                          style: AppTheme.textStyle(
+                            size: 14,
+                            weight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+
+                const SizedBox(height: 20),
+
                 /// LOGOUT
                 InkWell(
                   onTap: controller.logout,

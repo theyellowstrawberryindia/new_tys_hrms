@@ -15,6 +15,8 @@ class ProjectDetailsController extends GetxController {
   CurrentUser? currentUser;
 
   bool isEditing = false;
+  bool isAddPressed = false;
+  bool hasExistingFieldEdits = false;
   int expandedIndex = -1;
   bool showValidationErrors = false;
 
@@ -74,13 +76,43 @@ class ProjectDetailsController extends GetxController {
 
   void enableEdit() {
     isEditing = true;
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
+
+    final existingCount = currentUser!.projects.length;
+
+    for (int i = 0; i < existingCount; i++) {
+      titleControllers[i].addListener(_markExistingFieldEdited);
+      descriptionControllers[i].addListener(_markExistingFieldEdited);
+      startDateControllers[i].addListener(_markExistingFieldEdited);
+      endDateControllers[i].addListener(_markExistingFieldEdited);
+    }
+
     update();
   }
 
+  void _markExistingFieldEdited() {
+    if (!hasExistingFieldEdits) {
+      hasExistingFieldEdits = true;
+      update();
+    }
+  }
+
+  void _removeExistingFieldListeners() {
+    final existingCount = currentUser!.projects.length;
+
+    for (int i = 0; i < existingCount; i++) {
+      titleControllers[i].removeListener(_markExistingFieldEdited);
+      descriptionControllers[i].removeListener(_markExistingFieldEdited);
+      startDateControllers[i].removeListener(_markExistingFieldEdited);
+      endDateControllers[i].removeListener(_markExistingFieldEdited);
+    }
+  }
   /// Adds a blank field-set to the UI only (no API call).
   /// Mirrors EducationController.newEducation().
   void newProject() {
     showValidationErrors = false;
+    isAddPressed = true;
 
     final controller = TextEditingController();
 
@@ -339,7 +371,10 @@ class ProjectDetailsController extends GetxController {
     if (!isEditing) return;
 
     isEditing = false;
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
     showValidationErrors = false;
+    _removeExistingFieldListeners();
 
     loadCurrentUser();
 
@@ -356,7 +391,10 @@ class ProjectDetailsController extends GetxController {
 
       await refreshCurrentUser();
 
+      _removeExistingFieldListeners();
       isEditing = false;
+      isAddPressed = false;
+      hasExistingFieldEdits = false;
 
       update();
 

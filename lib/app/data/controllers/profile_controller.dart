@@ -6,11 +6,14 @@
  */
 import 'package:hrms_ys/app/core/utils/app_storage.dart';
 import 'package:hrms_ys/app/data/bindings/auth_binding.dart';
+import 'package:hrms_ys/app/data/bindings/privacy_policy_binding.dart';
+import 'package:hrms_ys/app/data/bindings/profile_binding.dart';
 import 'package:hrms_ys/app/data/bindings/project_details_binding.dart';
 import 'package:hrms_ys/app/data/bindings/work_experience_binding.dart';
 import 'package:hrms_ys/app/data/repository/profile_repository.dart';
 import 'package:hrms_ys/app/presentation/screens/attendance/apply_leave_screen.dart';
 import 'package:hrms_ys/app/presentation/screens/auth/auth_screen.dart';
+import 'package:hrms_ys/app/presentation/screens/profile/privacy_policy_screen.dart';
 import 'package:hrms_ys/app/presentation/screens/update/holiday_screen.dart';
 import 'package:hrms_ys/app/presentation/screens/update/notification_screen.dart';
 import 'package:intl/intl.dart';
@@ -495,6 +498,15 @@ class ProfileController extends GetxController {
 
   }
 
+  void openPrivacyPolicy() {
+    loadCurrentUser();
+    Get.to(
+          () => const PrivacyPolicyScreen(),
+      binding: PrivacyPolicyBinding(),
+    );
+
+  }
+
   void notificationSetting() {
     Get.to(NotificationScreen(showAppBar: true));
   }
@@ -663,7 +675,6 @@ class ProfileController extends GetxController {
       Loader.hideLoader();
 
       if (value['success'] == true) {
-        // Update local model
         bank.nameAsBank = accountHolderController.text.trim();
         bank.bankName = bankNameController.text.trim();
         bank.accountNo = accountNumberController.text.trim();

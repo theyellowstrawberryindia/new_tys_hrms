@@ -1,12 +1,34 @@
 import '../../../data/controllers/project_details_controller.dart';
 import '../../../packages.dart';
 import '../../../widgets/common_button.dart';
+import '../../../widgets/common_outline_button.dart';
 import '../../../widgets/common_confirmation_dialog.dart';
 import '../../../widgets/profile_detail_field.dart';
 import 'profile_detail_screen.dart';
 
 class ProjectDetailsScreen extends GetView<ProjectDetailsController> {
   const ProjectDetailsScreen({super.key});
+
+  void _handleSave(ProjectDetailsController controller) {
+    if (!controller.validateProjectFields()) {
+      controller.showValidationErrors = true;
+      controller.update();
+      return;
+    }
+
+    controller.showValidationErrors = false;
+
+    CommonConfirmationDialog.show(
+      title: "Save Changes",
+      message: "Save changes to your project details?",
+      positiveText: "Save",
+      negativeText: "Cancel",
+    ).then((confirmed) {
+      if (confirmed) {
+        controller.saveProjects();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +44,7 @@ class ProjectDetailsScreen extends GetView<ProjectDetailsController> {
           child: ProfileDetailScreen(
             title: "Projects",
             isEditing: controller.isEditing,
-            showActionButton: true,
+            showActionButton: !controller.isEditing,
             wrapInCard: false,
             onBack: () {
               if (controller.isEditing) {
@@ -32,29 +54,9 @@ class ProjectDetailsScreen extends GetView<ProjectDetailsController> {
               }
             },
             onEditSave: () {
-              if (controller.isEditing) {
-                if (!controller.validateProjectFields()) {
-                  controller.showValidationErrors = true;
-                  controller.update();
-                  return;
-                }
-
-                controller.showValidationErrors = false;
-
-                CommonConfirmationDialog.show(
-                  title: "Save Changes",
-                  message: "Save changes to your project details?",
-                  positiveText: "Save",
-                  negativeText: "Cancel",
-                ).then((confirmed) {
-                  if (confirmed) {
-                    controller.saveProjects();
-                  }
-                });
-              } else {
-                controller.enableEdit();
-              }
+              controller.enableEdit();
             },
+            onAdd: controller.isEditing ? controller.newProject : null,
             fields: [
               ...List.generate(controller.titleControllers.length, (index) {
                 final bool canDelete = controller.isEditing;
@@ -195,9 +197,21 @@ class ProjectDetailsScreen extends GetView<ProjectDetailsController> {
               if (controller.isEditing)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: CommonButton(
-                    text: "Add Project",
-                    onTap: controller.newProject,
+                  child: Column(
+                    children: [
+                      if (controller.isAddPressed ||
+                          controller.hasExistingFieldEdits) ...[
+                        CommonButton(
+                          text: "Save Project",
+                          onTap: () => _handleSave(controller),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      CommonOutlineButton(
+                        text: "Cancel",
+                        onTap: controller.cancelEdit,
+                      ),
+                    ],
                   ),
                 ),
               const SizedBox(height: 16),

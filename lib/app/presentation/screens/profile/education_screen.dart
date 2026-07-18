@@ -1,12 +1,7 @@
-/*
- *  Created by Yellow Strawberry LLP on xx/xx/26
- *  Copyright (c) 2026. All rights reserved.
- *
- */
-
 import '../../../data/controllers/education_controller.dart';
 import '../../../packages.dart';
 import '../../../widgets/common_button.dart';
+import '../../../widgets/common_outline_button.dart';
 import '../../../widgets/common_confirmation_dialog.dart';
 import '../../../widgets/profile_detail_field.dart';
 import 'profile_detail_screen.dart';
@@ -14,23 +9,41 @@ import 'profile_detail_screen.dart';
 class EducationDetailsScreen extends GetView<EducationDetailsController> {
   const EducationDetailsScreen({super.key});
 
+  void _handleSave(EducationDetailsController controller) {
+    if (!controller.validateEducationFields()) {
+      controller.showValidationErrors = true;
+      controller.update();
+      return;
+    }
+
+    controller.showValidationErrors = false;
+
+    CommonConfirmationDialog.show(
+      title: "Save Changes",
+      message: "Save changes to your education details?",
+      positiveText: "Save",
+      negativeText: "Cancel",
+    ).then((confirmed) {
+      if (confirmed) {
+        controller.saveEducation();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<EducationDetailsController>(
       builder: (controller) {
         return PopScope(
           canPop: !controller.isEditing,
-
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-
             controller.cancelEdit();
           },
-
           child: ProfileDetailScreen(
             title: "Education",
             isEditing: controller.isEditing,
-            showActionButton: true,
+            showActionButton: !controller.isEditing,
             wrapInCard: false,
             onBack: () {
               if (controller.isEditing) {
@@ -39,37 +52,13 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                 Get.back();
               }
             },
-
             onEditSave: () {
-              if (controller.isEditing) {
-                if (!controller.validateEducationFields()) {
-                  // Just surface inline field errors, no toast, and don't proceed.
-                  controller.showValidationErrors = true;
-                  controller.update();
-                  return;
-                }
-
-                controller.showValidationErrors = false;
-
-                CommonConfirmationDialog.show(
-                  title: "Save Changes",
-                  message: "Save changes to your education details?",
-                  positiveText: "Save",
-                  negativeText: "Cancel",
-                ).then((confirmed) {
-                  if (confirmed) {
-                    controller.saveEducation();
-                  }
-                });
-              } else {
-                controller.enableEdit();
-              }
+              controller.enableEdit();
             },
-
+            onAdd: controller.isEditing ? controller.newEducation : null,
             fields: [
               ...List.generate(controller.courseControllers.length, (index) {
                 final bool canDelete = controller.isEditing;
-
 
                 final bool isNewEntry =
                     index >= controller.currentUser!.education.length;
@@ -92,13 +81,10 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                       child: ExpansionTile(
                         key: ValueKey(index),
                         initiallyExpanded: controller.expandedIndex == index,
-
                         onExpansionChanged: (expanded) {
                           controller.toggleExpansion(index, expanded);
                         },
-
                         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-
                         title: Text(
                           controller.courseControllers[index].text.trim().isEmpty
                               ? "New Education"
@@ -107,7 +93,6 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                           overflow: TextOverflow.ellipsis,
                           style: AppTheme.textStyle(weight: FontWeight.w600),
                         ),
-
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -123,8 +108,6 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                                 ),
                                 onPressed: () async {
                                   if (isNewEntry) {
-                                    // Not persisted yet — just remove the
-                                    // tile locally, no confirmation needed.
                                     controller.removeNewEducation(index);
                                     return;
                                   }
@@ -144,9 +127,7 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                                   }
                                 },
                               ),
-
                             const SizedBox(width: 4),
-
                             Icon(
                               controller.expandedIndex == index
                                   ? Icons.expand_less
@@ -154,10 +135,8 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                             ),
                           ],
                         ),
-
                         childrenPadding:
                         const EdgeInsets.fromLTRB(16, 0, 16, 16),
-
                         children: [
                           ProfileDetailField(
                             title: "Course Name",
@@ -167,7 +146,6 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                             controller: controller.courseControllers[index],
                             readOnly: !controller.isEditing,
                           ),
-
                           ProfileDetailField(
                             title: "University",
                             maxLength: 100,
@@ -176,13 +154,11 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                             controller: controller.universityControllers[index],
                             readOnly: !controller.isEditing,
                           ),
-
                           ProfileDetailField(
                             title: "Grade",
                             controller: controller.gradeControllers[index],
                             readOnly: !controller.isEditing,
                           ),
-
                           ProfileDetailField(
                             title: "Start Date",
                             controller: controller.startDateControllers[index],
@@ -193,7 +169,6 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                                 ? () => controller.pickStartDate(index)
                                 : null,
                           ),
-
                           ProfileDetailField(
                             title: "End Date",
                             forceValidate: controller.showValidationErrors,
@@ -210,16 +185,26 @@ class EducationDetailsScreen extends GetView<EducationDetailsController> {
                   ),
                 );
               }),
-
               if (controller.isEditing)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: CommonButton(
-                    text: "Add Education",
-                    onTap: controller.newEducation,
+                  child: Column(
+                    children: [
+                      if (controller.isAddPressed ||
+                          controller.hasExistingFieldEdits) ...[
+                        CommonButton(
+                          text: "Save Education",
+                          onTap: () => _handleSave(controller),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      CommonOutlineButton(
+                        text: "Cancel",
+                        onTap: controller.cancelEdit,
+                      ),
+                    ],
                   ),
                 ),
-
               const SizedBox(height: 16),
             ],
           ),

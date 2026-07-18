@@ -25,9 +25,9 @@ class CommonTextField extends StatelessWidget {
 
   final bool? showCursor;
 
-
-
   final bool? styleReadOnly;
+
+  final bool isEmail; // <-- new
 
   const CommonTextField({
     super.key,
@@ -49,6 +49,7 @@ class CommonTextField extends StatelessWidget {
     this.isDateField = false,
     this.showCursor = true,
     this.styleReadOnly,
+    this.isEmail = false, // <-- new
   });
 
   @override
@@ -59,7 +60,8 @@ class CommonTextField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       validator: validator,
-      textCapitalization: TextCapitalization.sentences,
+      textCapitalization:
+      isEmail ? TextCapitalization.none : TextCapitalization.sentences,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       obscureText: isPassword ? !isPasswordVisible : false,
       style: AppTheme.textStyle(),
@@ -68,6 +70,9 @@ class CommonTextField extends StatelessWidget {
       onTap: onTap,
       maxLength: maxLength,
       showCursor: isDateField ? false : showCursor,
+      inputFormatters: isEmail || isPassword
+          ? null
+          : [_CapitalizeFirstLetterFormatter()],
 
       decoration: InputDecoration(
         hintText: hintText,
@@ -132,6 +137,26 @@ class CommonTextField extends StatelessWidget {
           borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
+    );
+  }
+}
+
+class _CapitalizeFirstLetterFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
+    if (newValue.text.isEmpty) return newValue;
+
+    final capitalized =
+        newValue.text[0].toUpperCase() + newValue.text.substring(1);
+
+    if (capitalized == newValue.text) return newValue;
+
+    return newValue.copyWith(
+      text: capitalized,
+      selection: newValue.selection,
     );
   }
 }

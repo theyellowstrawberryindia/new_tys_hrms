@@ -15,8 +15,10 @@ class WorkExperienceController extends GetxController {
   CurrentUser? currentUser;
 
   bool isEditing = false;
+  bool hasExistingFieldEdits = false;
   int expandedIndex = -1;
   bool showValidationErrors = false;
+  bool isAddPressed = false;
 
   final List<TextEditingController> companyControllers = [];
   final List<TextEditingController> designationControllers = [];
@@ -78,12 +80,33 @@ class WorkExperienceController extends GetxController {
 
   void enableEdit() {
     isEditing = true;
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
+
+    final existingCount = currentUser!.workExperience.length;
+
+    for (int i = 0; i < existingCount; i++) {
+      companyControllers[i].addListener(_markExistingFieldEdited);
+      designationControllers[i].addListener(_markExistingFieldEdited);
+      expControllers[i].addListener(_markExistingFieldEdited);
+      startDateControllers[i].addListener(_markExistingFieldEdited);
+      endDateControllers[i].addListener(_markExistingFieldEdited);
+    }
+
     update();
+  }
+
+  void _markExistingFieldEdited() {
+    if (!hasExistingFieldEdits) {
+      hasExistingFieldEdits = true;
+      update();
+    }
   }
 
   /// Adds a blank field-set to the UI only (no API call).
   void newWorkExperience() {
     showValidationErrors = false;
+    isAddPressed = true;
 
     final controller = TextEditingController();
 
@@ -348,11 +371,32 @@ class WorkExperienceController extends GetxController {
     update();
   }
 
+  // void _markExistingFieldEdited() {
+  //   if (!hasExistingFieldEdits) {
+  //     hasExistingFieldEdits = true;
+  //     update();
+  //   }
+  // }
+
+  void _removeExistingFieldListeners() {
+    final existingCount = currentUser!.workExperience.length;
+
+    for (int i = 0; i < existingCount; i++) {
+      companyControllers[i].removeListener(_markExistingFieldEdited);
+      designationControllers[i].removeListener(_markExistingFieldEdited);
+      expControllers[i].removeListener(_markExistingFieldEdited);
+      startDateControllers[i].removeListener(_markExistingFieldEdited);
+      endDateControllers[i].removeListener(_markExistingFieldEdited);
+    }
+  }
+
   void cancelEdit() {
     if (!isEditing) return;
 
     isEditing = false;
-    showValidationErrors = false;
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
+    _removeExistingFieldListeners();
 
     loadCurrentUser();
 
@@ -386,6 +430,11 @@ class WorkExperienceController extends GetxController {
     }
   }
 
+  void _resetEditFlags() {
+    isAddPressed = false;
+    hasExistingFieldEdits = false;
+  }
+
   @override
   void onClose() {
     for (final controller in companyControllers) {
@@ -403,6 +452,7 @@ class WorkExperienceController extends GetxController {
     for (final controller in endDateControllers) {
       controller.dispose();
     }
+    isAddPressed =false;
 
     super.onClose();
   }

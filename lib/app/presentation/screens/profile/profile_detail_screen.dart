@@ -17,6 +17,8 @@ class ProfileDetailScreen extends StatelessWidget {
 
   final bool wrapInCard;
 
+  final VoidCallback? onAdd;
+
   final VoidCallback? onEditSave;
   final VoidCallback? onBack;
 
@@ -34,6 +36,7 @@ class ProfileDetailScreen extends StatelessWidget {
     this.showActionButton = true,
     this.wrapInCard = true,
     this.onBack,
+    this.onAdd
   });
 
   @override
@@ -45,6 +48,22 @@ class ProfileDetailScreen extends StatelessWidget {
 
         title: title,
         onBack: onBack,
+        actions: [
+          if (onAdd != null)
+            IconButton(
+              icon: const Icon(Icons.add),
+              color: AppTheme.primaryColor(context),
+              onPressed: onAdd,
+            ),
+          if (showActionButton)
+            TextButton(
+              onPressed: onEditSave,
+              child: Text(
+                "Edit",
+                style: AppTheme.textStyle(weight: FontWeight.w600,color: AppTheme.primaryColor(context)),
+
+              ),
+            )        ],
         action: showActionButton
             ? TextButton(
           onPressed: onEditSave,

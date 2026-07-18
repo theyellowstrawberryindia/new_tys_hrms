@@ -55,6 +55,7 @@ class CurrentUser {
   List<WorkExperience> workExperience;
   List<Project> projects;
   List<Education> education;
+  List<Policy> policies;   // <-- new
   String message;
 
   CurrentUser({
@@ -66,6 +67,7 @@ class CurrentUser {
     required this.workExperience,
     required this.projects,
     required this.education,
+    required this.policies,   // <-- new
     required this.message,
   });
 
@@ -77,28 +79,28 @@ class CurrentUser {
     professionalDetails: json["professionalDetails"] == null
         ? []
         : List<ProfessionalDetail>.from(
-            json["professionalDetails"].map(
-              (x) => ProfessionalDetail.fromJson(x),
-            ),
-          ),
+      json["professionalDetails"].map(
+            (x) => ProfessionalDetail.fromJson(x),
+      ),
+    ),
 
     personalDetails: json["personalDetails"] == null
         ? []
         : List<PersonalDetail>.from(
-            json["personalDetails"].map((x) => PersonalDetail.fromJson(x)),
-          ),
+      json["personalDetails"].map((x) => PersonalDetail.fromJson(x)),
+    ),
 
     familyDetails: json["familyDetails"] == null
         ? []
         : List<FamilyDetail>.from(
-            json["familyDetails"].map((x) => FamilyDetail.fromJson(x)),
-          ),
+      json["familyDetails"].map((x) => FamilyDetail.fromJson(x)),
+    ),
 
     bankDetails: json["bankDetails"] == null
         ? []
         : List<BankDetail>.from(
-            json["bankDetails"].map((x) => BankDetail.fromJson(x)),
-          ),
+      json["bankDetails"].map((x) => BankDetail.fromJson(x)),
+    ),
 
     workExperience: (json["workExperience"] as List? ?? [])
         .map((e) => WorkExperience.fromJson(Map<String, dynamic>.from(e)))
@@ -110,6 +112,10 @@ class CurrentUser {
 
     education: (json["education"] as List? ?? [])
         .map((e) => Education.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
+
+    policies: (json["policies"] as List? ?? [])
+        .map((e) => Policy.fromJson(Map<String, dynamic>.from(e)))
         .toList(),
 
     message: safeString(json["message"]),
@@ -126,13 +132,13 @@ class CurrentUser {
     "familyDetails": List<dynamic>.from(familyDetails.map((x) => x.toJson())),
     "bankDetails": List<dynamic>.from(bankDetails.map((x) => x.toJson())),
     "workExperience": workExperience.map((e) => e.toJson()).toList(),
-
     "projects": projects.map((e) => e.toJson()).toList(),
-
     "education": education.map((e) => e.toJson()).toList(),
+    "policies": policies.map((e) => e.toJson()).toList(),
     "message": message,
   };
 }
+
 
 class BankDetail {
   int id;
@@ -633,6 +639,42 @@ class WorkExperience {
     "end_date":
         "${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}",
     "exp": exp,
+    "created_at": createdAt.toIso8601String(),
+    "updated_at": updatedAt.toIso8601String(),
+  };
+}
+
+class Policy {
+  int id;
+  String title;
+  String body;
+  String status;
+  DateTime createdAt;
+  DateTime updatedAt;
+
+  Policy({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory Policy.fromJson(Map<String, dynamic> json) => Policy(
+    id: safeInt(json["id"]),
+    title: safeString(json["title"]),
+    body: safeString(json["body"]),
+    status: safeString(json["status"]),
+    createdAt: safeDate(json["created_at"]) ?? DateTime.now(),
+    updatedAt: safeDate(json["updated_at"]) ?? DateTime.now(),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "title": title,
+    "body": body,
+    "status": status,
     "created_at": createdAt.toIso8601String(),
     "updated_at": updatedAt.toIso8601String(),
   };

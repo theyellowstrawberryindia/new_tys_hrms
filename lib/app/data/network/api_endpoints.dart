@@ -8,18 +8,18 @@
 
 class APIEndpoints{
 
-  //Base URL
+  ///Base URL
   static const String baseUrl = "https://hrms.tysindia.com/api/v1";
 
-  // Auth Endpoints
+  /// Auth Endpoints
   static const String login = "$baseUrl/login";
   static const String getUser = "$baseUrl/get-user";
 
-  //ADD ATTENDANCE
+  ///ADD ATTENDANCE
   static const String userAttendance = "$baseUrl/user-attendance";
   static const String getTodaysAttendance = "$baseUrl/getTodaysAttendance";
 
-  //GET ATTENDANCE
+  ///GET ATTENDANCE
   static const String getAttendance = "$baseUrl/get-attendance";
 
   ///SUBMIT REGULARIZATION
@@ -29,17 +29,20 @@ class APIEndpoints{
   static const String getLeaveStatus = "$baseUrl/get-leave-status";
   static const String applyLeave = "$baseUrl/apply-leave";
 
-
+  /// Notifications
   static const String getApprovals = "$baseUrl/get-user-notification";
   static const String getNotifications = "$baseUrl/get-user-pending-notification";
+
+  /// Holidays
   static const String getHolidays = "$baseUrl/get-holidays";
 
-
-  static const String profilePicture = "$baseUrl/edit-personal/profile-picture";
-
+  /// Professional
   static const String editProfessional = "$baseUrl/edit-personal/edit-professional";
+
+  /// Personal
   static const String editPersonal = "$baseUrl/edit-personal/edit-personal";
   static const String editFamily = "$baseUrl/edit-personal/edit-family";
+  static const String profilePicture = "$baseUrl/edit-personal/profile-picture";
 
   /// Bank
   static const String editBank = "$baseUrl/edit-bank";
@@ -53,6 +56,11 @@ class APIEndpoints{
   static const String editProject = "$baseUrl/edit-project";
   static const String addProject = "$baseUrl/add-project";
   static const String deleteProject = "$baseUrl/delete-project";
+
+  /// Privacy Policy
+  static const String getPolicy = "$baseUrl/get-policies";
+  static const String acceptPolicy = "$baseUrl/accept-policy";
+
 
   ///Work Experience
   static const String addWork = "$baseUrl/add-work-experience";

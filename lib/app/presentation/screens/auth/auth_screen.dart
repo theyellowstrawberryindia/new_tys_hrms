@@ -110,6 +110,7 @@ class AuthScreen extends GetView<AuthController> {
                                   hintText: "Enter your work email",
                                   focusNode: controller.emailFocus,
                                   isFocused: controller.isEmailFocused,
+                                  isEmail: true,
                                   validator: controller.validateEmail,
                                 );
                               },

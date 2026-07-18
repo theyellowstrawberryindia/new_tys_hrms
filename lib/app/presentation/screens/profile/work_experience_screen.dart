@@ -1,12 +1,34 @@
 import '../../../data/controllers/work_experience_controller.dart';
 import '../../../packages.dart';
 import '../../../widgets/common_button.dart';
+import '../../../widgets/common_outline_button.dart';
 import '../../../widgets/common_confirmation_dialog.dart';
 import '../../../widgets/profile_detail_field.dart';
 import 'profile_detail_screen.dart';
 
 class WorkExperienceScreen extends GetView<WorkExperienceController> {
   const WorkExperienceScreen({super.key});
+
+  void _handleSave(WorkExperienceController controller) {
+    if (!controller.validateWorkExperienceFields()) {
+      controller.showValidationErrors = true;
+      controller.update();
+      return;
+    }
+
+    controller.showValidationErrors = false;
+
+    CommonConfirmationDialog.show(
+      title: "Save Changes",
+      message: "Save changes to your work experience?",
+      positiveText: "Save",
+      negativeText: "Cancel",
+    ).then((confirmed) {
+      if (confirmed) {
+        controller.saveWorkExperience();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,13 +38,13 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
           canPop: !controller.isEditing,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-
             controller.cancelEdit();
           },
           child: ProfileDetailScreen(
             title: "Work Experience",
             isEditing: controller.isEditing,
-            showActionButton: true,
+            // Edit icon only shown in read-only mode.
+            showActionButton: !controller.isEditing,
             wrapInCard: false,
             onBack: () {
               if (controller.isEditing) {
@@ -32,29 +54,11 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
               }
             },
             onEditSave: () {
-              if (controller.isEditing) {
-                if (!controller.validateWorkExperienceFields()) {
-                  controller.showValidationErrors = true;
-                  controller.update();
-                  return;
-                }
-
-                controller.showValidationErrors = false;
-
-                CommonConfirmationDialog.show(
-                  title: "Save Changes",
-                  message: "Save changes to your work experience?",
-                  positiveText: "Save",
-                  negativeText: "Cancel",
-                ).then((confirmed) {
-                  if (confirmed) {
-                    controller.saveWorkExperience();
-                  }
-                });
-              } else {
-                controller.enableEdit();
-              }
+              // Fires only in read-only mode now.
+              controller.enableEdit();
             },
+            // New: "+" icon in the app bar while editing, replaces old Add button.
+            onAdd: controller.isEditing ? controller.newWorkExperience : null,
             fields: [
               ...List.generate(controller.companyControllers.length, (index) {
                 final bool canDelete = controller.isEditing;
@@ -81,8 +85,7 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
                       ),
                       child: ExpansionTile(
                         key: ValueKey(index),
-                        initiallyExpanded:
-                        controller.expandedIndex == index,
+                        initiallyExpanded: controller.expandedIndex == index,
                         onExpansionChanged: (expanded) {
                           controller.toggleExpansion(index, expanded);
                         },
@@ -109,7 +112,7 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
                                 constraints: const BoxConstraints(),
                                 icon: const Icon(
                                   Icons.delete_outline,
-                                  color: Colors.red,
+                                  color: Colors.grey,
                                   size: 22,
                                 ),
                                 onPressed: () async {
@@ -155,14 +158,12 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
                             controller: controller.companyControllers[index],
                             readOnly: !controller.isEditing,
                             forceValidate: controller.showValidationErrors,
-
                           ),
                           ProfileDetailField(
                             title: "Designation",
                             maxLength: 100,
                             minLength: 2,
-                            controller:
-                            controller.designationControllers[index],
+                            controller: controller.designationControllers[index],
                             readOnly: !controller.isEditing,
                             forceValidate: controller.showValidationErrors,
                           ),
@@ -176,8 +177,7 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
                           ),
                           ProfileDetailField(
                             title: "Start Date",
-                            controller:
-                            controller.startDateControllers[index],
+                            controller: controller.startDateControllers[index],
                             readOnly: !controller.isEditing,
                             isDateField: true,
                             forceValidate: controller.showValidationErrors,
@@ -204,9 +204,20 @@ class WorkExperienceScreen extends GetView<WorkExperienceController> {
               if (controller.isEditing)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: CommonButton(
-                    text: "Add Work Experience",
-                    onTap: controller.newWorkExperience,
+                  child: Column(
+                    children: [
+                      if (controller.isAddPressed || controller.hasExistingFieldEdits) ...[
+                        CommonButton(
+                          text: "Save Work Experience",
+                          onTap: () => _handleSave(controller),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      CommonOutlineButton(
+                        text: "Cancel",
+                        onTap: controller.cancelEdit,
+                      ),
+                    ],
                   ),
                 ),
               const SizedBox(height: 16),
