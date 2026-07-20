@@ -29,6 +29,10 @@ class APIEndpoints{
   static const String getLeaveStatus = "$baseUrl/get-leave-status";
   static const String applyLeave = "$baseUrl/apply-leave";
 
+  /// LEAVE DATA
+  static const String termStatusEndpoint = '$baseUrl/get-leave-term-status';
+  static const String termDetailsEndpoint = '$baseUrl/get-leave-term-details';
+
   /// Notifications
   static const String getApprovals = "$baseUrl/get-user-notification";
   static const String getNotifications = "$baseUrl/get-user-pending-notification";

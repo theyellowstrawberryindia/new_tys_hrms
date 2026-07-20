@@ -1,12 +1,14 @@
 /*
- *  Created by Yellow Strawberry LLP on 03/06/26, 3:27 pm
+ *  Created by Yellow Strawberry LLP on 03/06/26, 3:27 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 03/06/26, 3:27 pm
+ *  Last modified 03/06/26, 3:27 pm
  *
  */
 
+import '../data/bindings/leave_data_binding.dart';
 import '../data/controllers/apply_leave_controller.dart';
 import '../packages.dart';
+import '../presentation/screens/attendance/leave_data.dart';
 
 class LeaveStatusWidget extends StatelessWidget {
   final ApplyLeaveController controller;
@@ -99,112 +101,126 @@ class LeaveStatusWidget extends StatelessWidget {
                             ),
                           ),
 
-                          /// INNER CIRCLE
-                          Container(
-                            height: 190,
-                            width: 190,
+                          /// INNER CIRCLE (tap target -> Leave Data page)
+                          Material(
+                            color: Colors.transparent,
+                            shape: const CircleBorder(),
+                            clipBehavior: Clip.antiAlias,
 
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-
-                              color: Get.isDarkMode
-                                  ? AppColor.kDarkCardColor
-                                  : AppColor.kLightCardColor,
-
-                              border: Border.all(
-                                color: Get.isDarkMode
-                                    ? Colors.white10
-                                    : Colors.black12,
-
-                                width: 1,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => Get.to(
+                                    () => const LeaveDataPage(),
+                                binding: LeaveDataPageBinding(),
                               ),
 
-                              boxShadow: [
-                                BoxShadow(
+                              child: Container(
+                                height: 190,
+                                width: 190,
+
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+
                                   color: Get.isDarkMode
-                                      ? Colors.black.withValues(alpha: 0.25)
-                                      : Colors.black.withValues(alpha: 0.08),
+                                      ? AppColor.kDarkCardColor
+                                      : AppColor.kLightCardColor,
 
-                                  blurRadius: 15,
+                                  border: Border.all(
+                                    color: Get.isDarkMode
+                                        ? Colors.white10
+                                        : Colors.black12,
 
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-
-                              children: [
-                                /// PL
-                                Text(
-                                  "${controller.casualLeaves} PL",
-
-                                  style: AppTheme.textStyle(
-                                    size: 16,
-
-                                    weight: FontWeight.bold,
-
-                                    color: AppColor.kSuccessColor,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 4),
-
-                                /// SL
-                                Text(
-                                  "${controller.sickLeaves} SL",
-
-                                  style: AppTheme.textStyle(
-                                    size: 16,
-
-                                    weight: FontWeight.bold,
-
-                                    color: AppColor.kErrorColor,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 10),
-
-                                /// ANIMATED BALANCE
-                                TweenAnimationBuilder<double>(
-                                  tween: Tween<double>(
-                                    begin: 0,
-
-                                    end: controller.leaveBalance,
+                                    width: 1,
                                   ),
 
-                                  duration: const Duration(milliseconds: 1500),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Get.isDarkMode
+                                          ? Colors.black.withValues(alpha: 0.25)
+                                          : Colors.black.withValues(alpha: 0.08),
 
-                                  curve: Curves.easeOutCubic,
+                                      blurRadius: 15,
 
-                                  builder: (context, value, child) {
-                                    return Text(
-                                      value.toStringAsFixed(1),
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+
+                                  children: [
+                                    /// PL
+                                    Text(
+                                      "${controller.casualLeaves} PL",
 
                                       style: AppTheme.textStyle(
-                                        size: 36,
+                                        size: 16,
 
                                         weight: FontWeight.bold,
+
+                                        color: AppColor.kSuccessColor,
                                       ),
-                                    );
-                                  },
+                                    ),
+
+                                    const SizedBox(height: 4),
+
+                                    /// SL
+                                    Text(
+                                      "${controller.sickLeaves} SL",
+
+                                      style: AppTheme.textStyle(
+                                        size: 16,
+
+                                        weight: FontWeight.bold,
+
+                                        color: AppColor.kErrorColor,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 10),
+
+                                    /// ANIMATED BALANCE
+                                    TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(
+                                        begin: 0,
+
+                                        end: controller.leaveBalance,
+                                      ),
+
+                                      duration: const Duration(milliseconds: 1500),
+
+                                      curve: Curves.easeOutCubic,
+
+                                      builder: (context, value, child) {
+                                        return Text(
+                                          value.toStringAsFixed(1),
+
+                                          style: AppTheme.textStyle(
+                                            size: 36,
+
+                                            weight: FontWeight.bold,
+                                          ),
+                                        );
+                                      },
+                                    ),
+
+                                    const SizedBox(height: 4),
+
+                                    Text(
+                                      "Leaves Balance",
+
+                                      textAlign: TextAlign.center,
+
+                                      style: AppTheme.textStyle(
+                                        size: 14,
+
+                                        color: AppColor.kGrayTextColor,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-
-                                const SizedBox(height: 4),
-
-                                Text(
-                                  "Leaves Balance",
-
-                                  textAlign: TextAlign.center,
-
-                                  style: AppTheme.textStyle(
-                                    size: 14,
-
-                                    color: AppColor.kGrayTextColor,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ],

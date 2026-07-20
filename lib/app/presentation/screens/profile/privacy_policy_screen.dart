@@ -27,14 +27,25 @@ class PrivacyPolicyScreen extends GetView<PolicyController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Get.isDarkMode;
+    final bgColor = isDark ? AppColor.kDarkPrimaryBGColor : AppColor.kLightPrimaryBGColor;
+    final textColor = AppTheme.textColor(context);
+    final primaryColor = AppTheme.primaryColor(context);
+
     return GetBuilder<PolicyController>(
       builder: (controller) {
         return Scaffold(
-          appBar: CommonAppBar(title: "Company Policy"),
+          appBar: const CommonAppBar(title: "Company Policy"),
+          backgroundColor: bgColor,
           body: controller.isLoading
               ? const Center(child: CircularProgressIndicator())
               : controller.policy == null
-              ? const Center(child: Text("Policy unavailable."))
+              ? Center(
+            child: Text(
+              "Policy unavailable.",
+              style: AppTheme.textStyle(color: AppColor.kGrayTextColor),
+            ),
+          )
               : Column(
             children: [
               Expanded(
@@ -46,17 +57,15 @@ class PrivacyPolicyScreen extends GetView<PolicyController> {
                       "body": Style(
                         margin: Margins.zero,
                         padding: HtmlPaddings.zero,
+                        color: textColor,
+                        fontFamily: GoogleFonts.montserrat().fontFamily,
                       ),
                       "table": Style(
-                        border: Border.all(
-                          color: Theme.of(context).primaryColor,
-                        ),
+                        border: Border.all(color: primaryColor),
                       ),
                       "td": Style(
                         padding: HtmlPaddings.all(8),
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                        ),
+                        border: Border.all(color: AppColor.kBorderColor),
                       ),
                     },
                   ),
@@ -76,12 +85,10 @@ class PrivacyPolicyScreen extends GetView<PolicyController> {
                             value: controller.isPolicyAccepted
                                 ? true
                                 : controller.isCheckboxChecked,
-                            activeColor: Theme.of(context).primaryColor,
-                            checkColor: Theme.of(context).colorScheme.primary,
+                            activeColor: primaryColor,
+                            checkColor: isDark ? AppColor.kDarkCardColor : Colors.white,
                             side: BorderSide(
-                              color: Get.isDarkMode
-                                  ? AppColor.kDarkTextColor
-                                  : AppColor.kLightTextColor,
+                              color: textColor,
                               width: 1.5,
                             ),
                             onChanged: controller.isPolicyAccepted
@@ -101,7 +108,7 @@ class PrivacyPolicyScreen extends GetView<PolicyController> {
                                 padding: const EdgeInsets.only(top: 12),
                                 child: Text(
                                   "I have carefully read, understood, and agree to abide by the company's policies and guidelines.",
-                                  style: AppTheme.textStyle(size: 14),
+                                  style: AppTheme.textStyle(size: 14, color: textColor),
                                 ),
                               ),
                             ),
@@ -109,11 +116,12 @@ class PrivacyPolicyScreen extends GetView<PolicyController> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      CommonButton(
-                        text: controller.isPolicyAccepted
-                            ? "Policy Accepted"
-                            : "Accept Policy",
+                      controller.isPolicyAccepted?
+                    ElevatedButton(onPressed: (){}, child: Text("Policy Accepted") ,)
+                          : CommonButton(
+                        text: "Accept Policy",
                         onTap: () => _handleAccept(controller),
+
                       ),
                     ],
                   ),

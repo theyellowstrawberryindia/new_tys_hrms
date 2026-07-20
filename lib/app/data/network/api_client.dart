@@ -55,16 +55,30 @@ class ApiClient {
   ///   - An error if the network request fails.
   ///   - The error message from the server response if available.
   ///   - A generic error for other error scenarios.
-  Future<dynamic> get(String endpoint, {Map<String, dynamic> query = const {}}) async {
+  Future<dynamic> get(
+      String endpoint,
+      {Map<String, dynamic> query = const {}}
+      ) async {
+
+    if (!await isConnected()) {
+      return Future.error(
+          "Looks like you are not connected to internet."
+      );
+    }
+
     try {
       _dio.options = _baseOptions;
-      final response = await _dio.get(endpoint, queryParameters: query);
+
+      final response = await _dio.get(
+        endpoint,
+        queryParameters: query,
+      );
+
       return response.data;
     } catch (e) {
       return _handleError(e);
     }
   }
-
   /// Sends data to the specified [endpoint] using a POST request.
   ///
   /// The [body] of the request is JSON encoded before sending.

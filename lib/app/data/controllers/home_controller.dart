@@ -22,6 +22,7 @@ import '../../services/device_info_service.dart';
 import '../../services/location_service.dart';
 
 import 'package:geolocator/geolocator.dart';
+import '../../services/network_service.dart';
 import '../models/attendance_data.dart';
 import '../models/current_user.dart';
 import '../repository/home_repository.dart';
@@ -143,8 +144,17 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   Future<void> onReady() async {
-    // TODO: implement onReady
     super.onReady();
+
+    final connected = await NetworkService.hasInternet();
+
+    if (!connected) {
+      Toast.error(
+        message: "Looks like you are not connected to internet.",
+      );
+      return;
+    }
+
     _getUser();
     _getTodaysAttendance();
   }
@@ -158,9 +168,21 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   /// Refresh
   Future<void> refreshHome() async {
+
+    if (!await NetworkService.hasInternet()) {
+
+      Toast.error(
+        message: "Looks like you are not connected to internet.",
+      );
+
+      return;
+    }
+
     await positionStream?.cancel();
+
     await startLocationListener();
-    _getUser();
+
+    await _getUser();
   }
 
   void _initAnimations() {
