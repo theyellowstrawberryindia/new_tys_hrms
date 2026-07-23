@@ -1,24 +1,11 @@
 import 'package:hrms_ys/app/packages.dart';
 
 import '../../../data/controllers/leave_data_controller.dart';
+import '../../../data/models/leave_data.dart';
 import '../../../widgets/common_app_bar.dart';
 
-
-class LeaveDataPage extends StatefulWidget {
+class LeaveDataPage extends GetView<LeaveDataController> {
   const LeaveDataPage({super.key});
-
-  @override
-  State<LeaveDataPage> createState() => _LeaveDataPageState();
-}
-
-class _LeaveDataPageState extends State<LeaveDataPage> {
-  final LeaveDataController controller = Get.find<LeaveDataController>();
-
-  @override
-  void initState() {
-    super.initState();
-    controller.initLeaveData();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +13,9 @@ class _LeaveDataPageState extends State<LeaveDataPage> {
 
     return Scaffold(
       appBar: const CommonAppBar(title: 'Leave Data'),
-      backgroundColor: isDark ? AppColor.kDarkPrimaryBGColor : AppColor.kLightPrimaryBGColor,
+      backgroundColor: isDark
+          ? AppColor.kDarkPrimaryBGColor
+          : AppColor.kLightPrimaryBGColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -50,31 +39,36 @@ class LeaveDataToolbar extends GetView<LeaveDataController> {
   @override
   Widget build(BuildContext context) {
     final isDark = Get.isDarkMode;
-    final cardColor = isDark ? AppColor.kDarkCardColor : AppColor.kLightCardColor;
-    final textColor = isDark ? AppColor.kDarkTextColor : AppColor.kLightTextColor;
-
-    final currentYear = DateTime.now().year;
-    final years = List<int>.generate(5, (i) => currentYear - i); // last 5 years
+    final cardColor = isDark
+        ? AppColor.kDarkCardColor
+        : AppColor.kLightCardColor;
+    final textColor = isDark
+        ? AppColor.kDarkTextColor
+        : AppColor.kLightTextColor;
 
     return Row(
       children: [
         Obx(() {
+          if (controller.terms.isEmpty) return const SizedBox.shrink();
+
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: cardColor,
               border: Border.all(color: AppColor.kBorderColor),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(30),
             ),
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
-                value: controller.selectedLeaveYear.value,
+              child: DropdownButton<LeaveTerm>(
+                value: controller.selectedTerm.value,
                 dropdownColor: cardColor,
                 style: TextStyle(color: textColor, fontSize: 14),
-                items: years
-                    .map((y) => DropdownMenuItem(value: y, child: Text('$y')))
+                items: controller.terms
+                    .map(
+                      (t) => DropdownMenuItem(value: t, child: Text(t.label)),
+                    )
                     .toList(),
-                onChanged: controller.onLeaveYearChanged,
+                onChanged: controller.onTermChanged,
               ),
             ),
           );
@@ -103,7 +97,10 @@ class _FilterButton extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           gradient: const LinearGradient(
-            colors: [AppColor.kButtonLinearColor_1, AppColor.kButtonLinearColor_2],
+            colors: [
+              AppColor.kButtonLinearColor_1,
+              AppColor.kButtonLinearColor_2,
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -136,14 +133,10 @@ class LeaveDataTable extends GetView<LeaveDataController> {
         );
       }
 
-      if (controller.isLoadingDetails.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
       if (controller.rows.isEmpty) {
         return Center(
           child: Text(
-            'No leave data for this term.',
+            '',
             style: AppTheme.textStyle(color: AppColor.kGrayTextColor),
           ),
         );
@@ -153,18 +146,23 @@ class LeaveDataTable extends GetView<LeaveDataController> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
         itemCount: controller.rows.length,
-        separatorBuilder: (_, __) => Divider(color: AppColor.kBorderColor, height: 1),
+        separatorBuilder: (_, __) =>
+            Divider(color: AppColor.kBorderColor, height: 1),
         itemBuilder: (context, index) {
           final row = controller.rows[index];
           final color = controller.getStatusColor(row.attStatus);
 
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16,horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 /// STATUS ICON
-
+                Icon(
+                  _getIcon(row.attStatus),
+                  color: controller.getStatusColor(row.attStatus),
+                ),
+                const SizedBox(width: 12),
 
                 /// CONTENT
                 Expanded(
@@ -180,7 +178,10 @@ class LeaveDataTable extends GetView<LeaveDataController> {
                               children: [
                                 Text(
                                   "Date",
-                                  style: AppTheme.textStyle(size: 14, weight: FontWeight.w600),
+                                  style: AppTheme.textStyle(
+                                    size: 14,
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -200,7 +201,10 @@ class LeaveDataTable extends GetView<LeaveDataController> {
                               children: [
                                 Text(
                                   "Day",
-                                  style: AppTheme.textStyle(size: 14, weight: FontWeight.w600),
+                                  style: AppTheme.textStyle(
+                                    size: 14,
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -230,7 +234,10 @@ class LeaveDataTable extends GetView<LeaveDataController> {
                               children: [
                                 Text(
                                   "In Time",
-                                  style: AppTheme.textStyle(size: 14, weight: FontWeight.w600),
+                                  style: AppTheme.textStyle(
+                                    size: 14,
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -250,7 +257,10 @@ class LeaveDataTable extends GetView<LeaveDataController> {
                               children: [
                                 Text(
                                   "Out Time",
-                                  style: AppTheme.textStyle(size: 14, weight: FontWeight.w600),
+                                  style: AppTheme.textStyle(
+                                    size: 14,
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -279,7 +289,10 @@ class LeaveDataTable extends GetView<LeaveDataController> {
                               children: [
                                 Text(
                                   "Total Hours",
-                                  style: AppTheme.textStyle(size: 14, weight: FontWeight.w600),
+                                  style: AppTheme.textStyle(
+                                    size: 14,
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -299,15 +312,15 @@ class LeaveDataTable extends GetView<LeaveDataController> {
                             children: [
                               Text(
                                 "Status",
-                                style: AppTheme.textStyle(size: 14, weight: FontWeight.w600),
+                                style: AppTheme.textStyle(
+                                  size: 14,
+                                  weight: FontWeight.w600,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               _statusChip(row.attStatus ?? '-', color),
-
-
                             ],
                           ),
-
                         ],
                       ),
                     ],
@@ -330,16 +343,17 @@ class LeaveDataTable extends GetView<LeaveDataController> {
       ),
       child: Text(
         text,
-        style: AppTheme.textStyle(size: 10, weight: FontWeight.w600, color: color),
+        style: AppTheme.textStyle(
+          size: 10,
+          weight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
 
   IconData _getIcon(String? status) {
     switch ((status ?? '').toLowerCase()) {
-      case "present":
-        return Icons.check_rounded;
-
       case "late":
         return Icons.access_time_rounded;
 
@@ -350,7 +364,7 @@ class LeaveDataTable extends GetView<LeaveDataController> {
         return Icons.event_busy_rounded;
 
       case "halfday":
-        return Icons.schedule_rounded;
+        return Icons.timelapse_rounded;
 
       default:
         return Icons.circle;

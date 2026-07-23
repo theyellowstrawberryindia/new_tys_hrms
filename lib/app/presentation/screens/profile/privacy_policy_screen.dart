@@ -1,5 +1,6 @@
 import 'package:flutter_html/flutter_html.dart';
 import 'package:hrms_ys/app/widgets/common_app_bar.dart';
+import 'package:hrms_ys/app/widgets/common_outline_button.dart';
 
 import '../../../data/controllers/privacy_policy_controller.dart';
 import '../../../packages.dart';
@@ -108,20 +109,41 @@ class PrivacyPolicyScreen extends GetView<PolicyController> {
                                 padding: const EdgeInsets.only(top: 12),
                                 child: Text(
                                   "I have carefully read, understood, and agree to abide by the company's policies and guidelines.",
-                                  style: AppTheme.textStyle(size: 14, color: textColor),
+                                  style: AppTheme.textStyle(size: 12, color: textColor),
                                 ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      controller.isPolicyAccepted?
-                    ElevatedButton(onPressed: (){}, child: Text("Policy Accepted") ,)
-                          : CommonButton(
-                        text: "Accept Policy",
-                        onTap: () => _handleAccept(controller),
 
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: controller.isPolicyAccepted
+                            ? ElevatedButton(
+                          onPressed: null, // Disabled
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(35),
+                            ),
+                          ),
+                          child: Text("Policy Accepted",style: AppTheme.textStyle(
+                            size: 22,
+                            weight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          ),
+                        )
+                            :
+                        CommonButton(
+                          text: "Accept Policy",
+                          onTap: () => controller.isCheckboxChecked?_handleAccept(controller): null,
+
+
+                        ),
                       ),
                     ],
                   ),

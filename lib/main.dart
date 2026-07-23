@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:hrms_ys/app/packages.dart';
 import 'package:hrms_ys/app/presentation/screens/splash/splash_screen.dart';
@@ -16,10 +18,11 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-
+  // Local, no network — safe to await directly.
   await NotificationService.service.init();
-  await AppFirebaseMessage.instance.permission();
-  await AppFirebaseMessage.instance.receiveMessage();
+
+  // Network-dependent — must never block or crash app startup.
+  unawaited(_initFirebaseMessaging());
 
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
   FirebaseAnalytics.instance.logAppOpen();
@@ -27,6 +30,23 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+Future<void> _initFirebaseMessaging() async {
+  try {
+    await AppFirebaseMessage.instance
+        .permission()
+        .timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('FCM permission/token setup failed: $e');
+  }
+
+  try {
+    await AppFirebaseMessage.instance
+        .receiveMessage()
+        .timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('FCM receiveMessage/subscribeToTopic failed: $e');
+  }
+}
 
 
 

@@ -8,7 +8,7 @@
 import '../data/bindings/leave_data_binding.dart';
 import '../data/controllers/apply_leave_controller.dart';
 import '../packages.dart';
-import '../presentation/screens/attendance/leave_data.dart';
+import '../presentation/screens/attendance/leave_data_screen.dart';
 
 class LeaveStatusWidget extends StatelessWidget {
   final ApplyLeaveController controller;

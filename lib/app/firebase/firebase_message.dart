@@ -57,15 +57,19 @@ class AppFirebaseMessage {
       //deleting the token.
       FirebaseMessaging.instance.onTokenRefresh.listen((event) {
         AppStorage.instance.setValue(StorageKey.firebaseToken, event);
-        debugPrint("🔐️Token Refreshed: $event");
+        debugPrint("Token Refreshed: $event");
       });
     } catch (e) {
-      debugPrint("‼️Something wrong with firebase $e");
+      debugPrint("Something wrong with firebase $e");
     }
   }
 
   Future<void> receiveMessage() async {
-    await FirebaseMessaging.instance.subscribeToTopic('announcement');
+    try {
+      await FirebaseMessaging.instance.subscribeToTopic('announcement');
+    } catch (e) {
+      debugPrint('subscribeToTopic failed: $e');
+    }
 
     //To listen to messages whilst your application is in the foreground, listen to the onMessage stream.
     FirebaseMessaging.onMessage.listen((event) {

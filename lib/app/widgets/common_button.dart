@@ -38,7 +38,6 @@ class CommonButton extends StatelessWidget {
             BorderRadius.circular(35),
           ),
         ),
-
         child: Label(text: text,
           style: AppTheme.textStyle(
             size: 22,

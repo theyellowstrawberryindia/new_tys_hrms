@@ -93,7 +93,7 @@ class IDCardScreen extends StatelessWidget {
                           "Download",
                           style: AppTheme.textStyle(
                             color: AppColor.kPrimaryColor,
-                            size: 10,
+                            size: 8,
                             weight: FontWeight.w600,
                           ),
                         ),

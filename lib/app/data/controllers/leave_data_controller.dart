@@ -1,364 +1,110 @@
-/*
- *  Created by Yellow Strawberry LLP on 25/05/26, 2:37 pm
- *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 25/05/26, 2:37 pm
- *
- */
 
-import 'package:hrms_ys/app/data/models/attendance_list.dart';
-import 'package:hrms_ys/app/data/models/leave_status_response.dart';
-import 'package:hrms_ys/app/data/repository/attendance_repository.dart';
-import 'package:hrms_ys/app/data/repository/leave_data_repository.dart';
-
+import 'package:flutter/scheduler.dart';
 import '../../packages.dart';
-
-enum AttendanceFilter {
-  all,
-  present,
-  absent,
-  late,
-  leave,
-  halfDay,
-}
-
+import '../models/attendance_list.dart';
+import '../models/leave_data.dart';
+import '../repository/leave_data_repository.dart';
 
 class LeaveDataController extends GetxController {
-
-  final attendanceRepository = AttendanceRepository();
-
-  final leaveDataRepository = LeaveDataRepository();
-
-  final ScrollController monthScrollController = ScrollController();
-
-  final reimbursementVendorController = TextEditingController();
-
-  final reimbursementAmountController = TextEditingController();
-
-  final reimbursementUpiController = TextEditingController();
-
-  final reimbursementCommentController = TextEditingController();
-
-  DateTime? selectedRegularizeDate;
-
-  DateTime? selectedExpenseDate;
-
-  TimeOfDay? checkInTime;
-
-  TimeOfDay? checkOutTime;
-
-  String selectedExpenseCategory = "Select Category";
-
-  int presentDays = 25;
-
-  int absentDays = 1;
-
-  int lateDays = 2;
-
-  int leaveDays = 0;
-
-  int halfDays = 0;
-
-  int completedHours = 97;
-
-  int selectedYear = DateTime.now().year;
-
-  int selectedMonth = DateTime.now().month;
-
-  AttendanceListResponse? attendanceResponse;
-
-  List<AttendanceData> attendanceList = [];
-
-  List<AttendanceData> filteredAttendanceList = [];
-
-  AttendanceFilter selectedFilter = AttendanceFilter.all;
-
-  final List<String> months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  String get selectedMonthName {
-    return months[selectedMonth - 1];
-  }
-
-
-  final RxBool isLoadingDetails = false.obs;
+  final LeaveDataRepository leaveDataRepository = LeaveDataRepository();
 
   final RxnString errorMessage = RxnString();
 
-  final RxInt selectedLeaveYear = DateTime.now().year.obs;
+  final RxList<LeaveTerm> terms = <LeaveTerm>[].obs;
+  final Rx<LeaveTerm?> selectedTerm = Rx<LeaveTerm?>(null);
 
   final RxList<AttendanceData> rows = <AttendanceData>[].obs;
 
-  bool _leaveDataRequested = false;
+  bool _initialized = false;
 
-  void initLeaveData() {
-    if (_leaveDataRequested) return;
-    _leaveDataRequested = true;
-    loadLeaveData();
+  @override
+  void onInit() {
+    super.onInit();
+    initLeaveData();
   }
 
-  Future<void> loadLeaveData() async {
-    isLoadingDetails.value = true;
+  void initLeaveData() {
+    if (_initialized) return;
+    _initialized = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      loadTerms();
+    });
+  }
+
+  Future<void> loadTerms({int? year}) async {
     errorMessage.value = null;
 
     try {
-      final List<AttendanceData> merged = [];
+      Loader.showLoader();
 
-      // Fire all 12 months in parallel; a single month failing shouldn't
-      // kill the whole year, so each call is individually caught.
-      final results = await Future.wait(
-        months.map((month) async {
-          try {
-            final json = await leaveDataRepository.getLeaveDataForMonth(
-              selectedLeaveYear.value,
-              month,
-            );
-            final response = AttendanceListResponse.fromJson(json);
-            return response.data ?? <AttendanceData>[];
-          } catch (_) {
-            // Skip months with no data / errors (e.g. future months)
-            return <AttendanceData>[];
-          }
-        }),
+      final json = await leaveDataRepository.getLeaveTermStatus(
+        year: year ?? DateTime.now().year,
       );
+      final response = LeaveTermStatusResponse.fromJson(json);
+      terms.assignAll(response.data);
 
-      for (final monthData in results) {
-        merged.addAll(monthData);
-      }
-
-      rows.assignAll(merged);
-      isLoadingDetails.value = false;
-
-      if (rows.isEmpty) {
-        errorMessage.value = 'No leave data for this year.';
+      if (terms.isNotEmpty) {
+        selectedTerm.value = terms.first;
+        await _fetchTermDetails(terms.first.id);
+      } else {
+        rows.clear();
+        errorMessage.value = 'No leave terms found.';
       }
     } catch (e) {
-      isLoadingDetails.value = false;
+      errorMessage.value = 'Failed to load leave terms: $e';
+    } finally {
+      Loader.hideLoader();
+    }
+  }
+
+  Future<void> loadTermDetails(int termId) async {
+    errorMessage.value = null;
+    try {
+      Loader.showLoader();
+      await _fetchTermDetails(termId);
+    } finally {
+      Loader.hideLoader();
+    }
+  }
+
+  Future<void> _fetchTermDetails(int termId) async {
+    try {
+      final json = await leaveDataRepository.getLeaveTermDetails(termId);
+      final response = AttendanceListResponse.fromJson(json);
+      rows.assignAll(response.data ?? []);
+      if (rows.isEmpty) {
+        errorMessage.value = 'No leave data for this term.';
+      }
+    } catch (e) {
       errorMessage.value = 'Failed to load leave data: $e';
     }
   }
 
-  void onLeaveYearChanged(int? year) {
-    if (year == null) return;
-    selectedLeaveYear.value = year;
-    loadLeaveData();
+  void onTermChanged(LeaveTerm? term) {
+    if (term == null || term.id == selectedTerm.value?.id) return;
+    selectedTerm.value = term;
+    loadTermDetails(term.id);
   }
 
-  void onFilterPressed() => loadLeaveData();
-
-
-  // ---------------------------------------------------------------------
-
-  @override
-  void onReady() {
-    // TODO: implement onReady
-    //getAttendanceHistory();
-
-    super.onReady();
+  void onFilterPressed() {
+    final term = selectedTerm.value;
+    if (term != null) loadTermDetails(term.id);
   }
-
-  void changeMonth(int month) {
-    selectedMonth = month;
-
-    update();
-
-    scrollToSelectedMonth();
-
-    getAttendanceHistory();
-  }
-
-  void changeYear(int year) {
-    selectedYear = year;
-
-    update();
-
-    getAttendanceHistory();
-  }
-
-  int get totalDaysInMonth {
-    return DateTime(selectedYear, selectedMonth + 1, 0).day;
-  }
-
-  int get workingDays {
-    return attendanceResponse?.attendanceCount?.workingDays ?? totalDaysInMonth;
-  }
-
-  int get workingHoursInMonth {
-    return workingDays * 9;
-  }
-
 
   Color getStatusColor(String? status) {
     switch (status) {
       case "Present":
         return AppColor.kSuccessColor;
-
       case "Late":
         return Colors.amber;
-
       case "Absent":
         return AppColor.kErrorColor;
-
       case "Leave":
         return Colors.blue;
-
       case "Halfday":
         return Colors.purple;
-
       default:
         return AppColor.kGrayTextColor;
     }
   }
-
-  /// SCROLL TO CENTER
-  void scrollToSelectedMonth() {
-    if (!monthScrollController.hasClients) {
-      return;
-    }
-
-    const double itemWidth = 110;
-
-    final screenWidth = Get.width;
-
-    final targetOffset =
-        ((selectedMonth - 1) * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
-
-    monthScrollController.animateTo(
-      targetOffset < 0 ? 0 : targetOffset,
-
-      duration: const Duration(milliseconds: 300),
-
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void resetFilters() {
-    selectedYear = DateTime.now().year;
-
-    selectedMonth = DateTime.now().month;
-  }
-
-
-  ///REFRESH
-  Future<void> refreshAttendance() async {
-    selectedYear = DateTime.now().year;
-
-    selectedMonth = DateTime.now().month;
-
-    attendanceList.clear();
-
-    update();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      scrollToSelectedMonth();
-    });
-
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    getAttendanceHistory();
-  }
-
-  ///GET ATTENDANCE
-  void getAttendanceHistory() {
-
-    Loader.showLoader();
-
-    Map<String, dynamic> body = {
-      'year': selectedYear,
-      'month': selectedMonthName,
-    };
-    attendanceRepository
-        .getAttendance(body)
-        .then(
-          (value) {
-        Loader.hideLoader();
-
-        attendanceResponse = AttendanceListResponse.fromJson(value);
-
-        attendanceList = attendanceResponse?.data ?? [];
-
-        filteredAttendanceList = List.from(attendanceList);
-        selectedFilter = AttendanceFilter.all;
-
-        final summary = attendanceResponse?.attendanceCount;
-
-        presentDays = summary?.presentCount ?? 0;
-
-        absentDays = summary?.absentCount ?? 0;
-
-        lateDays = summary?.lateCount ?? 0;
-
-        leaveDays = summary?.leaveCount ?? 0;
-
-        halfDays = summary?.halfDayCount ?? 0;
-
-        completedHours =
-            int.tryParse(summary?.workedInMonth?.split(':').first ?? "0") ??
-                0;
-
-        update();
-      },
-      onError: (e) {
-        Loader.hideLoader();
-
-        Toast.error(message: e);
-      },
-    );
-  }
-
-  void filterAttendance(AttendanceFilter filter) {
-
-    /// Toggle
-    if (selectedFilter == filter) {
-      filter = AttendanceFilter.all;
-    }
-
-    selectedFilter = filter;
-
-    switch (filter) {
-
-      case AttendanceFilter.all:
-        filteredAttendanceList = List.from(attendanceList);
-        break;
-
-      case AttendanceFilter.present:
-        filteredAttendanceList =
-            attendanceList.where((e) => e.attStatus == "Present").toList();
-        break;
-
-      case AttendanceFilter.late:
-        filteredAttendanceList =
-            attendanceList.where((e) => e.isLate == 1).toList();
-        break;
-
-      case AttendanceFilter.absent:
-        filteredAttendanceList =
-            attendanceList.where((e) => e.attStatus == "Absent").toList();
-        break;
-
-      case AttendanceFilter.leave:
-        filteredAttendanceList =
-            attendanceList.where((e) => e.attStatus == "Leave").toList();
-        break;
-
-      case AttendanceFilter.halfDay:
-        filteredAttendanceList =
-            attendanceList.where((e) => e.attStatus == "Half Day").toList();
-        break;
-    }
-
-    update();
-  }
-
 }
