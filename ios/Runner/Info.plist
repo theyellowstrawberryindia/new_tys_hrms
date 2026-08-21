@@ -39,6 +39,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is required for attendance selfie.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Location is required for office attendance for check-in and check-out</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location is required for office attendance for check-in and check-out</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
