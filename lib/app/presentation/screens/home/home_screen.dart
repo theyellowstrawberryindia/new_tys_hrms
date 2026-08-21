@@ -303,7 +303,7 @@ class HomeScreen extends GetView<HomeController> {
                           ),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
                       ],
                     ),
                   ),

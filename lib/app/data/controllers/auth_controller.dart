@@ -74,7 +74,7 @@ class AuthController extends GetxController {
   Future<void> loadAppVersion() async {
     final info = await PackageInfo.fromPlatform();
 
-    appVersion = "Version ${info.version}";
+    appVersion = "Version ${info.version}(${info.buildNumber})";
     update();
   }
 
