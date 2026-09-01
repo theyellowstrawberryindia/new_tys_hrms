@@ -76,7 +76,8 @@ class ApprovalScreen extends GetView<UpdateController> {
                                       Text(
                                         "Type",
                                         style: AppTheme.textStyle(
-                                          size: 16,
+                                          size: 10,
+                                          color: AppColor.kGrayTextColor,
                                           weight: FontWeight.w600,
                                         ),
                                       ),
@@ -86,8 +87,7 @@ class ApprovalScreen extends GetView<UpdateController> {
                                       Text(
                                         _getType(item.label ?? ""),
                                         style: AppTheme.textStyle(
-                                          size: 10,
-                                          color: AppColor.kGrayTextColor,
+                                          size: 12,
                                           weight: FontWeight.w600,
                                         ),
                                       ),
@@ -102,7 +102,8 @@ class ApprovalScreen extends GetView<UpdateController> {
                                       Text(
                                         "Date",
                                         style: AppTheme.textStyle(
-                                          size: 16,
+                                          size: 10,
+                                          color: AppColor.kGrayTextColor,
                                           weight: FontWeight.w600,
                                         ),
                                       ),
@@ -113,8 +114,7 @@ class ApprovalScreen extends GetView<UpdateController> {
                                         _getDateText(item),
                                         textAlign: TextAlign.end,
                                         style: AppTheme.textStyle(
-                                          size: 10,
-                                          color: AppColor.kGrayTextColor,
+                                          size: 12,
                                           weight: FontWeight.w600
                                         ),
                                       ),
@@ -136,7 +136,8 @@ class ApprovalScreen extends GetView<UpdateController> {
                                       Text(
                                         "Reason",
                                         style: AppTheme.textStyle(
-                                          size: 16,
+                                          size: 10,
+                                          color: AppColor.kGrayTextColor,
                                           weight: FontWeight.w600,
                                         ),
                                       ),
@@ -148,8 +149,7 @@ class ApprovalScreen extends GetView<UpdateController> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: AppTheme.textStyle(
-                                          size: 10,
-                                          color: AppColor.kGrayTextColor,
+                                          size: 12,
                                           weight: FontWeight.w600,
                                         ),
                                       ),

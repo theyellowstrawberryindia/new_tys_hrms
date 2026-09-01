@@ -7,6 +7,7 @@
 
 class AssetPath {
   static const String logo = 'assets/images/logo/logo.png';
+  static const String logoDarkMode = 'assets/images/logo/logo_dark_mode.png';
   static const String loaderIcon = 'assets/images/logo/tys_launcher_icon.png';
 
 

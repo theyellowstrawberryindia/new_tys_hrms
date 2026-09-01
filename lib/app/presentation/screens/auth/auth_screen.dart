@@ -40,11 +40,11 @@ class AuthScreen extends GetView<AuthController> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Image.asset(
-                        AssetPath.logo,
+                        Get.isDarkMode ? AssetPath.logoDarkMode : AssetPath.logo,
                         width: 220,
                       ),
                     ),

@@ -142,13 +142,12 @@ class NotificationScreen extends GetView<UpdateController> {
     switch (label) {
       case "LV":
         return Colors.green;
-
+      case "RG":
+        return Colors.blueAccent;
       case "BD":
         return Colors.deepPurpleAccent;
-
       case "HD":
         return AppColor.kPrimaryColor;
-
       default:
         return AppColor.kPrimaryColor;
     }
@@ -158,13 +157,13 @@ class NotificationScreen extends GetView<UpdateController> {
     switch (label) {
       case "LV":
         return Icons.arrow_outward_rounded;
-
+      case "RG":
+        // return Icons.edit_calendar_outlined;
+        return Icons.refresh_outlined;
       case "BD":
         return Icons.cake_outlined;
-
       case "HD":
         return Icons.calendar_month_rounded;
-
       default:
         return Icons.notifications_none;
     }
@@ -172,7 +171,11 @@ class NotificationScreen extends GetView<UpdateController> {
 
   String _title(dynamic item) {
     if (item.label == "LV") {
-      return "Leave ${item.status ?? ""}";
+      return "Leave ${_capitalize(item.status)}";
+    }
+
+    if (item.label == "RG") {
+      return "Regularization ";
     }
 
     if (item.label == "BD") {
@@ -184,6 +187,11 @@ class NotificationScreen extends GetView<UpdateController> {
     }
 
     return "Notification";
+  }
+
+  String _capitalize(String? value) {
+    if (value == null || value.isEmpty) return "";
+    return value[0].toUpperCase() + value.substring(1).toLowerCase();
   }
 
   String _formatDate(String? date) {
