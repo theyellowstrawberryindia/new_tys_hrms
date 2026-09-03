@@ -19,11 +19,7 @@ import '../../../widgets/common_svg_icon.dart';
  *
  */
 
-import 'package:intl/intl.dart';
 
-import '../../../data/controllers/update_controller.dart';
-import '../../../packages.dart';
-import '../../../widgets/common_svg_icon.dart';
 
 class HolidayScreen extends GetView<UpdateController> {
   final bool showAppBar;

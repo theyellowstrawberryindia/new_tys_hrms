@@ -7,7 +7,6 @@
 
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:hrms_ys/app/core/core.dart';
 
 class LocationService {
   /// HANDLE PERMISSION

@@ -5,22 +5,24 @@
  *
  */
 
+import '../packages.dart';
+
 class NotificationLogger {
 
   static void log(
       Map<String, dynamic> data) {
 
-    print(
+    debugPrint(
       "==============================",
     );
 
-    print(
+    debugPrint(
       "FCM RECEIVED",
     );
 
     print(data);
 
-    print(
+    debugPrint(
       "==============================",
     );
   }

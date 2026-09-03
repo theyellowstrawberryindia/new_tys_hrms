@@ -21,7 +21,7 @@ class NotificationPayloadHandler {
   bool isForeground = true;
 
   void handle(Map<String, dynamic> payload) {
-    print("FCM DATA => $payload");
+    debugPrint("FCM DATA => $payload");
 
     if (!AppStorage.isLoggedIn()) {
       AppStorage.instance.setValue("pending_notification", payload);

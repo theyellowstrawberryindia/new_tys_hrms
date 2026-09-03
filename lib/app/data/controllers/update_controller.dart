@@ -8,7 +8,7 @@
 import '../../core/utils/utils.dart';
 import '../../packages.dart';
 import '../../presentation/screens/update/approval_detail_screen.dart';
-import '../models/HolidayModel.dart';
+import '../models/holiday_model.dart';
 import '../models/UpdateItemModel.dart';
 import '../repository/update_repository.dart';
 

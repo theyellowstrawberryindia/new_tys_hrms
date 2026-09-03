@@ -1,5 +1,3 @@
-import '../common/theme/app_color.dart';
-import '../common/theme/app_theme.dart';
 import '../packages.dart';
 import 'common_textfield.dart';
 

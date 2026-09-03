@@ -7,7 +7,6 @@
 import 'package:hrms_ys/app/core/utils/app_storage.dart';
 import 'package:hrms_ys/app/data/bindings/auth_binding.dart';
 import 'package:hrms_ys/app/data/bindings/privacy_policy_binding.dart';
-import 'package:hrms_ys/app/data/bindings/profile_binding.dart';
 import 'package:hrms_ys/app/data/bindings/project_details_binding.dart';
 import 'package:hrms_ys/app/data/bindings/work_experience_binding.dart';
 import 'package:hrms_ys/app/data/repository/profile_repository.dart';

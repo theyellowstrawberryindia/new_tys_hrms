@@ -1,6 +1,5 @@
 import 'package:flutter_html/flutter_html.dart';
 import 'package:hrms_ys/app/widgets/common_app_bar.dart';
-import 'package:hrms_ys/app/widgets/common_outline_button.dart';
 
 import '../../../data/controllers/privacy_policy_controller.dart';
 import '../../../packages.dart';

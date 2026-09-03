@@ -7,7 +7,6 @@
 
 import 'dart:io';
 import 'package:hrms_ys/app/data/repository/regularize_repository.dart';
-import 'package:hrms_ys/app/presentation/screens/attendance/regularize_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 

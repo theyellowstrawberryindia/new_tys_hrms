@@ -5,7 +5,6 @@
  *
  */
 
-import 'package:hrms_ys/app/widgets/common_attendance_popup.dart';
 import 'package:hrms_ys/app/widgets/common_svg_icon.dart';
 
 import '../../../packages.dart';

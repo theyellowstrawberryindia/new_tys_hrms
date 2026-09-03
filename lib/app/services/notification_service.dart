@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../firebase/notification_payload_handler.dart';
+import '../packages.dart';
 
 class NotificationService {
   NotificationService._internal();
@@ -105,8 +106,8 @@ class NotificationService {
       NotificationResponse response,
       ) async {
 
-    print("========== NOTIFICATION TAP ==========");
-    print(response.payload);
+    debugPrint("========== NOTIFICATION TAP ==========");
+    debugPrint(response.payload);
 
     if (response.payload != null) {
       handleActions(response.payload!);
@@ -117,17 +118,17 @@ class NotificationService {
     try {
       final Map<String, dynamic> map = jsonDecode(payload);
 
-      print("========================");
+      debugPrint("========================");
 
-      print("Notification Payload");
+      debugPrint("Notification Payload");
 
       print(map);
 
-      print("========================");
+      debugPrint("========================");
 
       NotificationPayloadHandler.instance.handle(map);
     } catch (e) {
-      print("Notification Parse Error => $e");
+      debugPrint("Notification Parse Error => $e");
     }
   }
 }

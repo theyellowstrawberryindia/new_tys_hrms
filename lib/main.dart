@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:hrms_ys/app/packages.dart';
 import 'package:hrms_ys/app/presentation/screens/splash/splash_screen.dart';
