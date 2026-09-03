@@ -146,7 +146,7 @@ class LeaveDataTable extends GetView<LeaveDataController> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
         itemCount: controller.rows.length,
-        separatorBuilder: (_, __) =>
+        separatorBuilder: (_, _) =>
             Divider(color: AppColor.kBorderColor, height: 1),
         itemBuilder: (context, index) {
           final row = controller.rows[index];
