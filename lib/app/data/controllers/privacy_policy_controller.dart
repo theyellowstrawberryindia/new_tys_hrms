@@ -76,41 +76,44 @@ class PolicyController extends GetxController {
     update();
   }
 
-  Future<void> acceptPolicy() async {
-    // Guard: already accepted, or checkbox not ticked — never send a request.
-    if (isPolicyAccepted) return;
-    if (!isCheckboxChecked) return;
+  Future<bool> acceptPolicy() async {
+    if (isPolicyAccepted) return true;
+    if (!isCheckboxChecked) return false;
 
     Loader.showLoader();
 
     try {
       final body = {
         "userid": currentUser!.data.first.userid.toString(),
-        "is_policy_accepted": true, // hardcoded literal — this screen never sends false
+        "is_policy_accepted": true,
       };
-
-      log("Accept Policy Request => ${jsonEncode(body)}");
 
       final response = await policyRepository.acceptPolicy(body);
 
-      log("Accept Policy Response => ${jsonEncode(response)}");
-
       if (response["status"] != true) {
-        throw Exception(response["message"] ?? "Failed to accept policy.");
+        throw Exception(
+          response["message"] ?? "Failed to accept policy.",
+        );
       }
 
-      if (currentUser != null && currentUser!.professionalDetails.isNotEmpty) {
+      if (currentUser != null &&
+          currentUser!.professionalDetails.isNotEmpty) {
         currentUser!.professionalDetails.first.isPolicyAccepted = 1;
+
         await AppStorage.instance.setUserData(currentUser!);
       }
 
       Loader.hideLoader();
 
       Toast.success(
-        message: response["message"] ?? "Policy acceptance updated successfully",
+        message:
+        response["message"] ??
+            "Policy acceptance updated successfully",
       );
 
       update();
+
+      return true;
     } catch (e, s) {
       log("Accept Policy Error => $e");
       log(s.toString());
@@ -118,6 +121,8 @@ class PolicyController extends GetxController {
       Loader.hideLoader();
 
       Toast.error(message: e.toString());
+
+      return false;
     }
   }
 }

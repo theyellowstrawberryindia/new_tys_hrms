@@ -54,8 +54,8 @@ class NotificationScreen extends GetView<UpdateController> {
 
                     children: [
                       Container(
-                        width: 24,
-                        height: 24,
+                        width: 22,
+                        height: 22,
 
                         decoration: BoxDecoration(
                           color: _iconColor(item.label),
@@ -65,7 +65,7 @@ class NotificationScreen extends GetView<UpdateController> {
                         child: Icon(
                           _iconData(item.label),
                           color: Colors.white,
-                          size: 16,
+                          size: 14,
                         ),
                       ),
 
@@ -80,7 +80,7 @@ class NotificationScreen extends GetView<UpdateController> {
                               _title(item),
 
                               style: AppTheme.textStyle(
-                                size: 16,
+                                size: 14,
                                 weight: FontWeight.w600,
                               ),
                             ),
@@ -171,7 +171,7 @@ class NotificationScreen extends GetView<UpdateController> {
 
   String _title(dynamic item) {
     if (item.label == "LV") {
-      return "Leave ${_capitalize(item.status)}";
+      return "Leave";
     }
 
     if (item.label == "RG") {

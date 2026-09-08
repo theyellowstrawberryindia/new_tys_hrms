@@ -3,7 +3,6 @@ import 'package:hrms_ys/app/core/core.dart';
 import 'package:hrms_ys/app/data/bindings/dashboard_binding.dart';
 import 'package:hrms_ys/app/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-
 import '../../core/utils/app_storage.dart';
 import '../../packages.dart';
 import '../repository/auth_repository.dart';
@@ -46,7 +45,6 @@ class AuthController extends GetxController {
 
   @override
   void onReady() {
-    // TODO: implement onReady
     super.onReady();
 
     ///Get Firebase Token

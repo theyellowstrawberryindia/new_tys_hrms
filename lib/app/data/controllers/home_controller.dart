@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 25/05/26, 2:36 pm
+ *  Created by Yellow Strawberry LLP on 25/05/26, 2:36 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 25/05/26, 2:36 pm
+ *  Last modified 25/05/26, 2:36 pm
  *
  */
 
@@ -23,9 +23,11 @@ import '../../services/location_service.dart';
 
 import 'package:geolocator/geolocator.dart';
 import '../../services/network_service.dart';
+import '../../widgets/policy_acceptance_dialog.dart';
 import '../models/attendance_data.dart';
 import '../models/current_user.dart';
 import '../repository/home_repository.dart';
+import 'privacy_policy_controller.dart';
 
 class HomeController extends GetxController with GetTickerProviderStateMixin {
   final homeRepository = HomeRepository();
@@ -155,7 +157,11 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       return;
     }
 
-    _getUser();
+    await _getUser();
+
+    /// SHOW PRIVACY POLICY GATE
+    await showPolicyAcceptanceDialog();
+
     _getTodaysAttendance();
   }
 
@@ -164,6 +170,46 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     _loaded = true;
     // _getUser();
     // _getTodaysAttendance();
+  }
+
+  bool _isPolicyDialogShowing = false;
+
+  Future<void> showPolicyAcceptanceDialog() async {
+    if (_isPolicyDialogShowing) return;
+
+    if (currentUser == null ||
+        currentUser!.professionalDetails.isEmpty) {
+      return;
+    }
+
+    /// User already accepted policy.
+    if (currentUser!
+        .professionalDetails
+        .first
+        .isPolicyAccepted ==
+        1) {
+      return;
+    }
+
+    /// PolicyAcceptanceDialog is a GetView<PolicyController> — make sure the
+    /// controller exists before the dialog tries to find it. It's normally
+    /// only registered via PrivacyPolicyBinding when navigating to that
+    /// screen directly, but the dashboard gate can fire before that route
+    /// is ever visited.
+    if (!Get.isRegistered<PolicyController>()) {
+      Get.put(PolicyController());
+    }
+
+    _isPolicyDialogShowing = true;
+
+    await Get.dialog(
+      const PolicyAcceptanceDialog(),
+
+      /// Cannot dismiss by tapping outside.
+      barrierDismissible: false,
+    );
+
+    _isPolicyDialogShowing = false;
   }
 
   /// Refresh
@@ -511,7 +557,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
           title: "Attendance",
           message: attendanceConfirmationMessage,
           description:
-              "You have completed "
+          "You have completed "
               "${totalHours == '00:00' ? getWorkedHours() : totalHours} "
               "for the day.",
           positiveText: isCheckedOut ? "Update" : "Check-out",
@@ -527,7 +573,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
       /// OPEN CAMERA IMMEDIATELY
       final File? image = await Get.to<File>(
-        () => const AttendanceCameraScreen(),
+            () => const AttendanceCameraScreen(),
       );
 
       isOpeningCamera = false;
@@ -673,7 +719,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   void _getTodaysAttendance() {
     Loader.showLoader();
     homeRepository.getTodaysAttendance().then(
-      (value) {
+          (value) {
         Loader.hideLoader();
 
         updateAttendanceUI(value);
@@ -737,14 +783,14 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         .postToken(body)
         .then(
           (value) {
-            //Loader.hideLoader();
-            AppUtils.printMessage("Token sent");
-          },
-          onError: (e) {
-            Loader.hideLoader();
-            Toast.error(message: e);
-          },
-        );
+        //Loader.hideLoader();
+        AppUtils.printMessage("Token sent");
+      },
+      onError: (e) {
+        Loader.hideLoader();
+        Toast.error(message: e);
+      },
+    );
   }
 
   @override

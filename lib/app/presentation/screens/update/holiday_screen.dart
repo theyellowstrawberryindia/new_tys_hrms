@@ -129,7 +129,7 @@ class HolidayScreen extends GetView<UpdateController> {
                             item.holidayName ?? "",
 
                             style: AppTheme.textStyle(
-                              size: 16,
+                              size: 14,
                               weight: FontWeight.w600,
                             ),
                           ),
@@ -150,7 +150,7 @@ class HolidayScreen extends GetView<UpdateController> {
                       child: CommonSvgIcon(
                         asset: AssetPath.holidayIcon,
 
-                        size: 24,
+                        size: 22,
 
                         color: AppColor.kPrimaryColor,
                       ),

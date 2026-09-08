@@ -22,13 +22,13 @@ class Loader {
             child: Stack(
               children: [
                 Center(
-                  child: Image.asset(AssetPath.loaderIcon,width: 40),
+                  child: Image.asset( Get.isDarkMode? AssetPath.darkModeLoaderIcon : AssetPath.loaderIcon,width: 40),
                 ),
                 Center(
                   child: SizedBox(
                     width: 90,
                     height: 90,
-                    child: CircularProgressIndicator(color: AppColor.kPrimaryColor,),
+                    child: CircularProgressIndicator(color: Get.isDarkMode? Colors.white : AppColor.kPrimaryColor,),
                   ),
                 ),
               ],
