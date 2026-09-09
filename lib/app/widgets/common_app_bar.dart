@@ -43,8 +43,11 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
           : null,
       title: Text(
         title,
-
-        style: AppTheme.textStyle(size: 20, weight: FontWeight.w700),
+        style: AppTheme.textStyle(
+          context: context,
+          size: 20,
+          weight: FontWeight.w700,
+        ),
       ),
 
       actions: actions ?? [action ?? const SizedBox(width: 50)],

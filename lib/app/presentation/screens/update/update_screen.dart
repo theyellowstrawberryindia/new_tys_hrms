@@ -81,7 +81,8 @@ class UpdateScreen extends GetView<UpdateController> {
     required String icon,
     required bool selected,
     required VoidCallback onTap,
-  }) {
+  })
+  {
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -109,9 +110,9 @@ class UpdateScreen extends GetView<UpdateController> {
                       ? AppColor.kPrimaryColor
                       : AppColor.kGrayTextColor,
                 ),
-          
+
                 const SizedBox(height: 8),
-          
+
                 Text(
                   title,
                   style: AppTheme.textStyle(

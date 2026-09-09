@@ -1,10 +1,3 @@
-/*
- *  Created by Yellow Strawberry LLP on 21/05/26, 7:27 pm
- *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 21/05/26, 7:27 pm
- *
- */
-
 import 'package:hrms_ys/app/packages.dart';
 
 class AppTheme {
@@ -24,7 +17,9 @@ class AppTheme {
         secondary: AppColor.kIconColor,
       ),
 
-      appBarTheme: const AppBarTheme(elevation: 0),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+      ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
@@ -52,7 +47,9 @@ class AppTheme {
         secondary: AppColor.kYellowTextColor,
       ),
 
-      appBarTheme: const AppBarTheme(elevation: 0),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+      ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1E1E1E),
@@ -65,18 +62,19 @@ class AppTheme {
   }
 
   static TextStyle textStyle({
+    BuildContext? context,
     double size = 14,
     FontWeight weight = FontWeight.normal,
     Color? color,
   }) {
     return GoogleFonts.montserrat(
       fontSize: size,
-
       fontWeight: weight,
 
-      color:
-          color ??
-          (Get.isDarkMode ? AppColor.kDarkTextColor : AppColor.kLightTextColor),
+      color: color ??
+          (context != null
+              ? Theme.of(context).colorScheme.onSurface
+              : Get.theme.colorScheme.onSurface),
     );
   }
 
