@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 06/06/26, 2:04 pm
+ *  Created by Yellow Strawberry LLP on 06/06/26, 2:04 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 06/06/26, 2:04 pm
+ *  Last modified 06/06/26, 2:04 pm
  *
  */
 
@@ -29,6 +29,8 @@ class HolidayScreen extends GetView<UpdateController> {
 
   @override
   Widget build(BuildContext context) {
+
+    final valueColor = Theme.of(context).colorScheme.onSurface;
 
     final body = GetBuilder<UpdateController>(
       builder: (controller) {
@@ -84,6 +86,7 @@ class HolidayScreen extends GetView<UpdateController> {
                                   style: AppTheme.textStyle(
                                     size: 10,
                                     weight: FontWeight.w600,
+                                    color: valueColor,
                                   ),
                                 ),
                               ),
@@ -131,6 +134,7 @@ class HolidayScreen extends GetView<UpdateController> {
                             style: AppTheme.textStyle(
                               size: 14,
                               weight: FontWeight.w600,
+                              color: valueColor,
                             ),
                           ),
                         ],

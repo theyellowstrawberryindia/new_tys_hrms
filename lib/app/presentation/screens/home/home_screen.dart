@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 25/05/26, 2:30 pm
+ *  Created by Yellow Strawberry LLP on 25/05/26, 2:30 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 25/05/26, 2:30 pm
+ *  Last modified 25/05/26, 2:30 pm
  *
  */
 
@@ -10,6 +10,7 @@ import 'package:hrms_ys/app/widgets/common_svg_icon.dart';
 import '../../../packages.dart';
 
 import '../../../data/controllers/home_controller.dart';
+import '../../../data/controllers/dashboard_controller.dart';
 
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
@@ -64,11 +65,11 @@ class HomeScreen extends GetView<HomeController> {
 
                               TextSpan(
                                 text:
-                                    controller
-                                        .currentUser
-                                        ?.data
-                                        .first
-                                        .firstName ??
+                                controller
+                                    .currentUser
+                                    ?.data
+                                    .first
+                                    .firstName ??
                                     "User",
                                 style: AppTheme.textStyle(
                                   size: 24,
@@ -83,10 +84,10 @@ class HomeScreen extends GetView<HomeController> {
 
                         Text(
                           controller
-                                  .currentUser
-                                  ?.professionalDetails
-                                  .first
-                                  .designation ??
+                              .currentUser
+                              ?.professionalDetails
+                              .first
+                              .designation ??
                               "Designation",
                           style: AppTheme.textStyle(
                             size: 16,
@@ -113,9 +114,9 @@ class HomeScreen extends GetView<HomeController> {
                           controller.currentDate,
 
                           style: AppTheme.textStyle(
-                            size: 16,
-                            color: AppColor.kGrayTextColor,
-                            weight: FontWeight.w500
+                              size: 16,
+                              color: AppColor.kGrayTextColor,
+                              weight: FontWeight.w500
                           ),
                         ),
 
@@ -215,9 +216,9 @@ class HomeScreen extends GetView<HomeController> {
                               ? controller.officeDistance
                               : "Checking Work Location...",
                           style: AppTheme.textStyle(
-                            size: 14,
+                              size: 14,
                               color: controller.locationColor,
-                            weight: FontWeight.w600
+                              weight: FontWeight.w600
                           ),
                         ),
 
@@ -225,7 +226,7 @@ class HomeScreen extends GetView<HomeController> {
                           controller.currentAddress,
 
                           style: AppTheme.textStyle(
-                            size: 10,
+                              size: 10,
                               color: controller.locationColor,
                               weight: FontWeight.w600
                           ),
@@ -234,70 +235,77 @@ class HomeScreen extends GetView<HomeController> {
                         const SizedBox(height: 44),
 
                         /// STATS CARD
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 350),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(22),
 
-                          curve: Curves.easeOutCubic,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                          
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                          
-                              borderRadius: BorderRadius.circular(22),
-                          
-                              border: Border.all(
-                                color: AppColor.kPrimaryColor.withValues(alpha: .18),
+                          onTap: () {
+                            Get.find<DashboardController>().changeTab(1);
+                          },
+
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutCubic,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
                               ),
-                          
-                              boxShadow: [
-                          
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: .05),
-                                  blurRadius: 18,
-                                  spreadRadius: 2,
-                                  offset: const Offset(0, 10),
-                                ),
-                          
-                                BoxShadow(
-                                  color: AppColor.kPrimaryColor.withValues(alpha: .05),
-                                  blurRadius: 6,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                          
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          
-                              children: [
-                                _item(
-                                  iconPath: AssetPath.checkInIcon,
-                                  title: controller.checkInTime,
-                                  subtitle: "Clock in",
-                                  color: controller.attendanceColor,
-                                  rotation: controller.clockInRotation,
+
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+
+                                borderRadius: BorderRadius.circular(22),
+
+                                border: Border.all(
+                                  color: AppColor.kPrimaryColor.withValues(alpha: .18),
                                 ),
 
-                                _item(
-                                  iconPath: AssetPath.checkOutIcon,
-                                  title: controller.checkOutTime,
-                                  subtitle: "Check out",
-                                  color: controller.attendanceColor,
-                                  rotation: controller.clockOutRotation,
-                                ),
+                                boxShadow: [
 
-                                _item(
-                                  iconPath: AssetPath.timeIcon,
-                                  title: controller.totalHours,
-                                  subtitle: "Total hours",
-                                  color: controller.attendanceColor,
-                                  rotation: controller.totalHourRotation,
-                                ),
-                              ],
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: .05),
+                                    blurRadius: 18,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 10),
+                                  ),
+
+                                  BoxShadow(
+                                    color: AppColor.kPrimaryColor.withValues(alpha: .05),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                                children: [
+                                  _item(
+                                    iconPath: AssetPath.checkInIcon,
+                                    title: controller.checkInTime,
+                                    subtitle: "Clock in",
+                                    color: controller.attendanceColor,
+                                    rotation: controller.clockInRotation,
+                                  ),
+
+                                  _item(
+                                    iconPath: AssetPath.checkOutIcon,
+                                    title: controller.checkOutTime,
+                                    subtitle: "Check out",
+                                    color: controller.attendanceColor,
+                                    rotation: controller.clockOutRotation,
+                                  ),
+
+                                  _item(
+                                    iconPath: AssetPath.timeIcon,
+                                    title: controller.liveTotalHours,
+                                    subtitle: "Total hours",
+                                    color: controller.attendanceColor,
+                                    rotation: controller.totalHourRotation,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -320,17 +328,13 @@ class HomeScreen extends GetView<HomeController> {
     required String title,
     required String subtitle,
     required Color color,
-
     required Animation<double> rotation,
   }) {
     return Column(
       children: [
         AnimatedBuilder(
-
           animation: rotation,
-
           builder: (_, child) {
-
             return Transform.translate(
               offset: Offset(
                 0,
@@ -342,7 +346,6 @@ class HomeScreen extends GetView<HomeController> {
               ),
             );
           },
-
           child: Container(
             width: 38,
             height: 38,
@@ -362,44 +365,23 @@ class HomeScreen extends GetView<HomeController> {
             ),
           ),
         ),
+
         const SizedBox(height: 12),
 
-        AnimatedSwitcher(
-
-          duration: const Duration(milliseconds: 300),
-
-          transitionBuilder: (child, animation) {
-
-            return FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: animation,
-                child: child,
-              ),
-            );
-          },
-
-          child: Text(
-            title,
-
-            key: ValueKey(title),
-
-            style: AppTheme.textStyle(
-              size: 16,
-              weight: FontWeight.w600,
-            ),
+        Text(
+          title,
+          style: AppTheme.textStyle(
+            size: 16,
+            weight: FontWeight.w600,
           ),
         ),
 
         AnimatedDefaultTextStyle(
-
           duration: const Duration(milliseconds: 250),
-
           style: AppTheme.textStyle(
             size: 10,
             color: AppColor.kGrayTextColor,
           ),
-
           child: Text(subtitle),
         ),
       ],

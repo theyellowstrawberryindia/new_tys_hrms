@@ -13,9 +13,6 @@ class PolicyAcceptanceDialog extends GetView<PolicyController> {
   const PolicyAcceptanceDialog({super.key});
 
   Future<void> _readPolicy() async {
-    // Push the full policy screen so the user can read it. That screen
-    // shares the same PolicyController, so if they accept from there,
-    // controller.isPolicyAccepted flips and this dialog auto-closes below.
     await Get.to(() => const PrivacyPolicyScreen());
   }
 
@@ -40,8 +37,7 @@ class PolicyAcceptanceDialog extends GetView<PolicyController> {
   Widget build(BuildContext context) {
     return GetBuilder<PolicyController>(
       builder: (controller) {
-        // Safety net: if acceptance is confirmed (from here or from the
-        // full-screen read flow), close the gate automatically.
+
         if (controller.isPolicyAccepted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (Get.isDialogOpen ?? false) Get.back();
@@ -52,9 +48,7 @@ class PolicyAcceptanceDialog extends GetView<PolicyController> {
         final textColor = AppTheme.textColor(context);
 
         return PopScope(
-          // Hard-blocks the system/gesture back button. Combined with the
-          // caller's `barrierDismissible: false`, there is no way out
-          // except accepting the policy.
+
           canPop: false,
           child: Dialog(
             backgroundColor: Colors.transparent,

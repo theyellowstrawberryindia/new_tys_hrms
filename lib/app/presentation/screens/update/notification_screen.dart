@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 06/06/26, 2:05 pm
+ *  Created by Yellow Strawberry LLP on 06/06/26, 2:05 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 06/06/26, 2:05 pm
+ *  Last modified 06/06/26, 2:05 pm
  *
  */
 
@@ -18,6 +18,8 @@ class NotificationScreen extends GetView<UpdateController> {
 
   @override
   Widget build(BuildContext context) {
+
+    final valueColor = Theme.of(context).colorScheme.onSurface;
 
     final body = GetBuilder<UpdateController>(
       builder: (controller) {
@@ -82,6 +84,7 @@ class NotificationScreen extends GetView<UpdateController> {
                               style: AppTheme.textStyle(
                                 size: 14,
                                 weight: FontWeight.w600,
+                                color: valueColor,
                               ),
                             ),
 
@@ -158,7 +161,7 @@ class NotificationScreen extends GetView<UpdateController> {
       case "LV":
         return Icons.arrow_outward_rounded;
       case "RG":
-        // return Icons.edit_calendar_outlined;
+      // return Icons.edit_calendar_outlined;
         return Icons.refresh_outlined;
       case "BD":
         return Icons.cake_outlined;

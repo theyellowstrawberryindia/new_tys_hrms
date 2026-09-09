@@ -108,6 +108,7 @@ class AttendanceSummaryCard extends StatelessWidget {
                     label: "PRESENT",
                     value: "${controller.presentDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
                     color: AppColor.kSuccessColor,
+                    context: context,
                     progress: controller.presentDays / controller.workingDays,
                     isSelected:
                     controller.selectedFilter == AttendanceFilter.present,
@@ -128,6 +129,7 @@ class AttendanceSummaryCard extends StatelessWidget {
                     label: "ABSENT",
                     value: "${controller.absentDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
                     color: AppColor.kErrorColor,
+                    context: context,
                     progress: controller.absentDays / controller.workingDays,
                     isSelected:
                     controller.selectedFilter == AttendanceFilter.absent,
@@ -148,6 +150,7 @@ class AttendanceSummaryCard extends StatelessWidget {
                     label: "LATE",
                     value: "${controller.lateDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
                     color: Colors.amber,
+                    context: context,
                     progress: controller.lateDays / controller.workingDays,
                     isSelected:
                     controller.selectedFilter == AttendanceFilter.late,
@@ -168,6 +171,7 @@ class AttendanceSummaryCard extends StatelessWidget {
                     label: "LEAVE",
                     value: "${controller.leaveDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
                     color: Colors.blue,
+                    context: context,
                     progress: controller.leaveDays / controller.workingDays,
                     isSelected:
                     controller.selectedFilter == AttendanceFilter.leave,
@@ -187,12 +191,13 @@ class AttendanceSummaryCard extends StatelessWidget {
                     label: "HALF DAY",
                     value: "${controller.halfDays}/${controller.attendanceResponse?.attendanceCount?.workingDays ?? 0}",
                     color: Colors.purple,
+                    context: context,
                     progress: controller.halfDays / controller.workingDays,
                     isSelected:
                     controller.selectedFilter == AttendanceFilter.halfDay,
                     onTap: () {
                       controller.filterAttendance(AttendanceFilter.halfDay);
-                    },
+                    }
                   ),
                 ),
               ),
@@ -204,6 +209,7 @@ class AttendanceSummaryCard extends StatelessWidget {
   }
 
   Widget _summaryItem({
+    required BuildContext context,
     required String label,
     required String value,
     required Color color,
@@ -213,6 +219,8 @@ class AttendanceSummaryCard extends StatelessWidget {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       borderRadius: BorderRadius.circular(12),
 
@@ -240,9 +248,23 @@ class AttendanceSummaryCard extends StatelessWidget {
 
         child: Column(
           children: [
-            SizedBox(
+            Container(
               height: 44,
               width: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [

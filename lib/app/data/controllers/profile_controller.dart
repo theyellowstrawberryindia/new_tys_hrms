@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 25/05/26, 2:37 pm
+ *  Created by Yellow Strawberry LLP on 25/05/26, 2:37 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 25/05/26, 2:37 pm
+ *  Last modified 25/05/26, 2:37 pm
  *
  */
 import 'package:hrms_ys/app/core/utils/app_storage.dart';
@@ -135,7 +135,6 @@ class ProfileController extends GetxController {
 
   @override
   void onReady() {
-    // TODO: implement onReady
     super.onReady();
   }
 
@@ -166,7 +165,7 @@ class ProfileController extends GetxController {
 
     /// Local image first
     profileImageUrl =
-        "${AppConfig.imageBaseURL}storage/uploads/${currentUser?.personalDetails.first.src ?? ""}";
+    "${AppConfig.imageBaseURL}storage/uploads/${currentUser?.personalDetails.first.src ?? ""}";
 
     /// API image fallback
     if (profileImageUrl.isEmpty) {
@@ -233,7 +232,7 @@ class ProfileController extends GetxController {
     personalEmailController.text = "NA";
 
     addressController.text =
-        "${personal?.address} ${personal?.address2} ${personal?.city} ${personal?.state}";
+    "${personal?.address} ${personal?.address2} ${personal?.city} ${personal?.state}";
 
     /// BANK
 
@@ -257,7 +256,7 @@ class ProfileController extends GetxController {
 
     if ((bank?.aadharImg ?? "").isNotEmpty) {
       aadharCardImageUrl =
-          "${AppConfig.imageBaseURL}storage/${bank?.aadharImg}";
+      "${AppConfig.imageBaseURL}storage/${bank?.aadharImg}";
     }
 
     /// FAMILY
@@ -284,32 +283,35 @@ class ProfileController extends GetxController {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
 
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
 
-              title: Text("Camera", style: AppTheme.textStyle()),
+                title: Text("Camera", style: AppTheme.textStyle()),
 
-              onTap: () {
-                Get.back();
+                onTap: () {
+                  Get.back();
 
-                pickProfileImage(ImageSource.camera);
-              },
-            ),
+                  pickProfileImage(ImageSource.camera);
+                },
+              ),
 
-            ListTile(
-              leading: const Icon(Icons.photo),
+              ListTile(
+                leading: const Icon(Icons.photo),
 
-              title: Text("Gallery", style: AppTheme.textStyle()),
+                title: Text("Gallery", style: AppTheme.textStyle()),
 
-              onTap: () {
-                Get.back();
+                onTap: () {
+                  Get.back();
 
-                pickProfileImage(ImageSource.gallery);
-              },
-            ),
-          ],
+                  pickProfileImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -330,6 +332,8 @@ class ProfileController extends GetxController {
 
       aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
 
+      compressFormat: ImageCompressFormat.jpg,
+
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Profile Picture',
@@ -339,13 +343,29 @@ class ProfileController extends GetxController {
           hideBottomControls: false,
         ),
 
-        IOSUiSettings(title: 'Crop Profile Picture'),
+        IOSUiSettings(
+          title: 'Crop Profile Picture',
+          cropStyle: CropStyle.circle,
+        ),
       ],
     );
 
     if (cropped == null) return;
 
-    selectedProfileImage = File(cropped.path);
+    final file = File(cropped.path);
+
+    const maxSizeInBytes = 1048 * 1024;
+
+    final fileSizeInBytes = await file.length();
+
+    if (fileSizeInBytes > maxSizeInBytes) {
+      Toast.error(
+        message: "Image is too large. Please choose a smaller image (max 1 MB).",
+      );
+      return;
+    }
+
+    selectedProfileImage = file;
 
     await uploadProfilePicture();
   }
@@ -366,31 +386,31 @@ class ProfileController extends GetxController {
         .changeProfilePhoto(body, selectedProfileImage)
         .then(
           (value) {
-            Loader.hideLoader();
+        Loader.hideLoader();
 
-            if (value['success'] == true) {
-              final imageUrl = value['data']['src'] ?? "";
+        if (value['success'] == true) {
+          final imageUrl = value['data']['src'] ?? "";
 
-              if (imageUrl.isNotEmpty) {
-                profileImageUrl =
-                    "${AppConfig.imageBaseURL}storage/uploads/$imageUrl";
-                ;
-                AppStorage.instance.setProfileImage(imageUrl);
-              }
+          if (imageUrl.isNotEmpty) {
+            profileImageUrl =
+            "${AppConfig.imageBaseURL}storage/uploads/$imageUrl";
+            ;
+            AppStorage.instance.setProfileImage(imageUrl);
+          }
 
-              update();
-              Toast.success(message: value['message']);
-            } else {
-              Toast.error(message: value['message']);
-            }
-          },
+          update();
+          Toast.success(message: value['message']);
+        } else {
+          Toast.error(message: value['message']);
+        }
+      },
 
-          onError: (e) {
-            Loader.hideLoader();
+      onError: (e) {
+        Loader.hideLoader();
 
-            Toast.error(message: e.toString());
-          },
-        );
+        Toast.error(message: e.toString());
+      },
+    );
   }
 
   void openImage(String url) {

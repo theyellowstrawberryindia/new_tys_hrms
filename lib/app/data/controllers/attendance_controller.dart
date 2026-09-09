@@ -9,6 +9,8 @@ import 'package:hrms_ys/app/data/models/attendance_list.dart';
 import 'package:hrms_ys/app/data/repository/attendance_repository.dart';
 
 import '../../packages.dart';
+import '../models/update_item_model.dart';
+import '../repository/update_repository.dart';
 
 enum AttendanceFilter {
   all,
@@ -23,6 +25,8 @@ enum AttendanceFilter {
 class AttendanceController extends GetxController {
 
   final attendanceRepository = AttendanceRepository();
+
+  final updateRepository = UpdateRepository();
 
   final ScrollController monthScrollController = ScrollController();
 
@@ -64,6 +68,8 @@ class AttendanceController extends GetxController {
 
   List<AttendanceData> attendanceList = [];
 
+  List<UpdateItem> approvalList = [];
+
   List<AttendanceData> filteredAttendanceList = [];
 
   AttendanceFilter selectedFilter = AttendanceFilter.all;
@@ -86,7 +92,15 @@ class AttendanceController extends GetxController {
   String get selectedMonthName {
     return months[selectedMonth - 1];
   }
+  bool get isFutureMonth {
+    final now = DateTime.now();
 
+    if (selectedYear > now.year) return true;
+
+    if (selectedYear == now.year && selectedMonth > now.month) return true;
+
+    return false;
+  }
 
 
   @override
@@ -246,6 +260,35 @@ class AttendanceController extends GetxController {
         );
   }
 
+  Future<UpdateItem?> findApprovalForAttendance(String? attDate) async {
+    if (attDate == null) return null;
+
+    if (approvalList.isEmpty) {
+      try {
+        final value = await updateRepository.getApprovals();
+        approvalList = (value['data'] as List).map((e) => UpdateItem.fromJson(e)).toList();
+      } catch (e) {
+        Toast.error(message: e.toString());
+        return null;
+      }
+    }
+
+    for (final item in approvalList) {
+      if (item.label == "RG" && item.attDate == attDate) {
+        return item;
+      }
+      if (item.label == "LV" && item.startDate != null && item.endDate != null) {
+        final date = DateTime.tryParse(attDate);
+        final start = DateTime.tryParse(item.startDate!);
+        final end = DateTime.tryParse(item.endDate!);
+        if (date != null && start != null && end != null &&
+            !date.isBefore(start) && !date.isAfter(end)) {
+          return item;
+        }
+      }
+    }
+    return null;
+  }
   void filterAttendance(AttendanceFilter filter) {
 
     /// Toggle

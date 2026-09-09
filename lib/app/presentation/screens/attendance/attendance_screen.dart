@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 25/05/26, 2:30 pm
+ *  Created by Yellow Strawberry LLP on 25/05/26, 2:30 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 25/05/26, 2:30 pm
+ *  Last modified 25/05/26, 2:30 pm
  *
  */
 
@@ -23,36 +23,39 @@ class AttendanceScreen extends StatelessWidget {
           appBar: CommonAppBar(
             title: "Attendance",
             showBackButton: false,
-            action: Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+            action: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
 
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
 
-                border: Border.all(color: AppColor.kPrimaryColor),
-              ),
+                  border: Border.all(color: AppColor.kPrimaryColor),
+                ),
 
-              child: DropdownButton<int>(
-                value: controller.selectedYear,
+                child: DropdownButton<int>(
+                  value: controller.selectedYear,
 
-                underline: const SizedBox(),
+                  underline: const SizedBox(),
 
-                items: List.generate(5, (index) {
-                  final year = DateTime.now().year - 2 + index;
+                  items: List.generate(5, (index) {
+                    final year = DateTime.now().year - 2 + index;
 
-                  return DropdownMenuItem(
-                    value: year,
+                    return DropdownMenuItem(
+                      value: year,
 
-                    child: Text(year.toString(), style: AppTheme.textStyle()),
-                  );
-                }),
+                      child: Text(year.toString(), style: AppTheme.textStyle()),
+                    );
+                  }),
 
-                onChanged: (value) {
-                  if (value != null) {
-                    controller.changeYear(value);
-                  }
-                },
+                  onChanged: (value) {
+                    if (value != null) {
+                      controller.changeYear(value);
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -68,93 +71,130 @@ class AttendanceScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  AttendanceSummaryCard(controller: controller),
+                  if (controller.isFutureMonth)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 60 ),
+                      child: Column(
+                        children: [
+                          Get.isDarkMode?
+                          Image.asset(AssetPath.darkModeEmptyState)
+                        : Image.asset(AssetPath.lightModeEmptyState),
 
-                  const SizedBox(height: 20),
+                          const SizedBox(height: 0),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                          Text(
+                            "No attendance data yet!",
+                            style: AppTheme.textStyle(
+                              size: 16,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
 
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(color: AppColor.kBorderColor),
-                        bottom: BorderSide(color: AppColor.kBorderColor),
-                      ),
-                    ),
+                          const SizedBox(height: 4),
 
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 70,
-                          child: Center(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 2),
                             child: Text(
-                              "Date",
+                              "Please select the current month or an earlier one to view the attendance.",
+                              textAlign: TextAlign.center,
+                              style: AppTheme.textStyle(
+                                size: 14,
+                                color: AppColor.kGrayTextColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    AttendanceSummaryCard(controller: controller),
+
+                    const SizedBox(height: 20),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: AppColor.kBorderColor),
+                          bottom: BorderSide(color: AppColor.kBorderColor),
+                        ),
+                      ),
+
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 70,
+                            child: Center(
+                              child: Text(
+                                "Date",
+                                style: AppTheme.textStyle(size: 10),
+                              ),
+                            ),
+                          ),
+
+                          Expanded(
+                            child: Text(
+                              "In",
+                              textAlign: TextAlign.center,
                               style: AppTheme.textStyle(size: 10),
                             ),
                           ),
-                        ),
 
-                        Expanded(
-                          child: Text(
-                            "In",
-                            textAlign: TextAlign.center,
-                            style: AppTheme.textStyle(size: 10),
+                          Expanded(
+                            child: Text(
+                              "Out",
+                              textAlign: TextAlign.center,
+                              style: AppTheme.textStyle(size: 10),
+                            ),
                           ),
-                        ),
 
-                        Expanded(
-                          child: Text(
-                            "Out",
-                            textAlign: TextAlign.center,
-                            style: AppTheme.textStyle(size: 10),
+                          Expanded(
+                            child: Text(
+                              "Total hours",
+                              textAlign: TextAlign.center,
+                              style: AppTheme.textStyle(size: 10),
+                            ),
                           ),
-                        ),
 
-                        Expanded(
-                          child: Text(
-                            "Total hours",
-                            textAlign: TextAlign.center,
-                            style: AppTheme.textStyle(size: 10),
-                          ),
-                        ),
-
-                        SizedBox(width: 40),
-                      ],
+                          SizedBox(width: 40),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  ListView.builder(
-                    itemCount: controller.filteredAttendanceList.length,
+                    ListView.builder(
+                      itemCount: controller.filteredAttendanceList.length,
 
-                    shrinkWrap: true,
+                      shrinkWrap: true,
 
-                    physics: const NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
 
-                    itemBuilder: (context, index) {
+                      itemBuilder: (context, index) {
 
-                      final item = controller.filteredAttendanceList[index];
-                      //AppUtils.printMessage("attendanceId -- ${item.id.toString()}");
+                        final item = controller.filteredAttendanceList[index];
+                        //AppUtils.printMessage("attendanceId -- ${item.id.toString()}");
 
-                      return AttendanceListItem(
+                        return AttendanceListItem(
 
-                        date: item.attDate?.split('-').last ?? "--",
+                          date: item.attDate?.split('-').last ?? "--",
 
-                        day: item.attDay?.substring(0, 3) ?? "--",
+                          day: item.attDay?.substring(0, 3) ?? "--",
 
-                        inTime: item.inTime ?? "-",
+                          inTime: item.inTime ?? "-",
 
-                        outTime: item.outTime == "00:00:00"
-                            ? "-"
-                            : item.outTime ?? "-",
+                          outTime: item.outTime == "00:00:00"
+                              ? "-"
+                              : item.outTime ?? "-",
 
-                        totalHours: item.totalHours ?? "-",
+                          totalHours: item.totalHours ?? "-",
 
-                        statusColor: controller.getStatusColor(item.attStatus),
+                          statusColor: controller.getStatusColor(item.attStatus),
 
-                        attendanceData: item,
-                      );
-                    },
-                  ),
+                          attendanceData: item,
+                        );
+                      },
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
                 ],

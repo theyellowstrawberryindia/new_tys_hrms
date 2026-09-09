@@ -17,54 +17,6 @@ class AttendanceMonthHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Container(
-        //   height: 64,
-        //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-        //   child: Row(
-        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //
-        //     children: [
-        //       Text(
-        //         "Attendance",
-        //         style: AppTheme.textStyle(size: 24, weight: FontWeight.w600),
-        //       ),
-        //
-        //       Container(
-        //         height: 32,
-        //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        //
-        //         decoration: BoxDecoration(
-        //           borderRadius: BorderRadius.circular(16),
-        //
-        //           border: Border.all(color: AppColor.kPrimaryColor),
-        //         ),
-        //
-        //         child: DropdownButton<int>(
-        //           value: controller.selectedYear,
-        //
-        //           underline: const SizedBox(),
-        //
-        //           items: List.generate(5, (index) {
-        //             final year = DateTime.now().year - 2 + index;
-        //
-        //             return DropdownMenuItem(
-        //               value: year,
-        //
-        //               child: Text(year.toString(), style: AppTheme.textStyle()),
-        //             );
-        //           }),
-        //
-        //           onChanged: (value) {
-        //             if (value != null) {
-        //               controller.changeYear(value);
-        //             }
-        //           },
-        //         ),
-        //       ),
-        //     ],
-        //   ),
-        // ),
-
         const SizedBox(height: 8),
 
         SizedBox(

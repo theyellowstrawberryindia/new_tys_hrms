@@ -45,4 +45,8 @@ class AssetPath {
 
   static const defaultProfile ="assets/images/default_picture.png";
 
+  //attendance empty state
+  static const darkModeEmptyState = "assets/images/icons/empty_state_dark_mode.png";
+  static const lightModeEmptyState = "assets/images/icons/empty_state_light_mode.png";
+
 }

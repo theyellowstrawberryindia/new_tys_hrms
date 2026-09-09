@@ -72,6 +72,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   String totalHours = "--:--";
 
+  String liveTotalHours = "--:--";
+
   String attendanceDate = "";
 
   bool _loaded = false;
@@ -367,9 +369,65 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
     validateAttendanceDay();
 
+    _updateLiveTotalHours();
+
     update();
   }
+  ///live counter
+  void _updateLiveTotalHours() {
+    /// FROZEN — checkout already happened
+    if (isCheckedOut) {
+      final parts = totalHours.split(":");
 
+      if (parts.length == 2) {
+        liveTotalHours = "$totalHours:00";
+      } else {
+        liveTotalHours = totalHours;
+      }
+
+      return;
+    }
+
+    /// NOT CHECKED IN YET
+    if (!isCheckedIn ||
+        checkInTime == "--:--" ||
+        checkInTime.isEmpty) {
+      liveTotalHours = "--:--";
+      return;
+    }
+
+    try {
+      final now = DateTime.now();
+
+      final inParts = checkInTime.split(":");
+
+      final checkInDate = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(inParts[0]),
+        int.parse(inParts[1]),
+        int.parse(inParts[2]),
+      );
+
+      var diff = now.difference(checkInDate);
+
+      if (diff.isNegative) {
+        diff = Duration.zero;
+      }
+
+      final hours = diff.inHours.toString().padLeft(2, '0');
+      final minutes =
+      (diff.inMinutes % 60).toString().padLeft(2, '0');
+      final seconds =
+      (diff.inSeconds % 60).toString().padLeft(2, '0');
+
+      /// LIVE COUNTER
+      liveTotalHours = "$hours:$minutes:$seconds";
+    } catch (e) {
+      liveTotalHours = totalHours;
+    }
+  }
   /// ATTENDANCE UI
 
   void updateAttendanceUI(Map<String, dynamic> response) {
@@ -396,6 +454,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
     isCheckedOut = checkOutTime != "00:00:00" && checkOutTime.isNotEmpty;
 
+    _updateLiveTotalHours();
+
     update();
   }
 
@@ -415,6 +475,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     checkOutTime = "--:--";
 
     totalHours = "--:--";
+
+    _updateLiveTotalHours();
 
     update();
   }

@@ -55,7 +55,7 @@ class CurrentUser {
   List<WorkExperience> workExperience;
   List<Project> projects;
   List<Education> education;
-  List<Policy> policies;   // <-- new
+  List<Policy> policies;
   String message;
 
   CurrentUser({
@@ -67,7 +67,7 @@ class CurrentUser {
     required this.workExperience,
     required this.projects,
     required this.education,
-    required this.policies,   // <-- new
+    required this.policies,
     required this.message,
   });
 
