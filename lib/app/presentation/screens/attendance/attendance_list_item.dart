@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 01/06/26, 3:19 pm
+ *  Created by Yellow Strawberry LLP on 01/06/26, 3:19 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 01/06/26, 3:19 pm
+ *  Last modified 01/06/26, 3:19 pm
  *
  */
 
@@ -18,20 +18,14 @@ import 'apply_leave_screen.dart';
 
 class AttendanceListItem extends StatelessWidget {
   final String date;
-
   final String day;
-
   final String inTime;
-
   final String outTime;
-
   final String totalHours;
-
+  final String attendanceStatus;
   final Color statusColor;
-
   final AttendanceData attendanceData;
-
-
+  final String holiday;
 
   const AttendanceListItem({
     super.key,
@@ -40,19 +34,38 @@ class AttendanceListItem extends StatelessWidget {
     required this.inTime,
     required this.outTime,
     required this.totalHours,
+    required this.attendanceStatus,
     required this.statusColor,
     required this.attendanceData,
+    required this.holiday,
+
   });
 
   @override
   Widget build(BuildContext context) {
+    final status = attendanceStatus.trim().toLowerCase();
+
+    final isWeeklyOff = status == "weekly off";
+
+    final isHoliday = status == "holiday";
+
+    final isNonWorkingDay = isWeeklyOff || isHoliday;
+
+    final holidayText = isHoliday
+        ? (holiday.trim().isNotEmpty && holiday.trim() != "0"
+        ? "Holiday (${holiday.trim()})"
+        : "Holiday")
+        : attendanceStatus.trim();
     return InkWell(
       onTap: attendanceData.isApplied == 1
           ? () async {
         Loader.showLoader();
 
         final controller = Get.find<AttendanceController>();
-        final item = await controller.findApprovalForAttendance(attendanceData.attDate);
+
+        final item = await controller.findApprovalForAttendance(
+          attendanceData.attDate,
+        );
 
         Loader.hideLoader();
 
@@ -63,12 +76,19 @@ class AttendanceListItem extends StatelessWidget {
         }
       }
           : null,
+
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 10,
+        ),
 
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: AppColor.kBorderColor, width: 1),
+            bottom: BorderSide(
+              color: AppColor.kBorderColor,
+              width: 1,
+            ),
           ),
         ),
 
@@ -77,7 +97,6 @@ class AttendanceListItem extends StatelessWidget {
             /// DATE BOX
             Container(
               width: 44,
-
               height: 44,
 
               decoration: BoxDecoration(
@@ -93,13 +112,19 @@ class AttendanceListItem extends StatelessWidget {
                   Text(
                     date,
 
-                    style: AppTheme.textStyle(size: 12, weight: FontWeight.w600),
+                    style: AppTheme.textStyle(
+                      size: 12,
+                      weight: FontWeight.w600,
+                    ),
                   ),
 
                   Text(
                     day,
 
-                    style: AppTheme.textStyle(size: 12, weight: FontWeight.w600),
+                    style: AppTheme.textStyle(
+                      size: 12,
+                      weight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -107,60 +132,75 @@ class AttendanceListItem extends StatelessWidget {
 
             const SizedBox(width: 16),
 
-            /// IN TIME
-            Expanded(
-              child: Text(
-                inTime,
+            /// WEEKLY OFF
+            /// Replaces In + Out + Total Hours
+            /// WEEKLY OFF / HOLIDAY
+            /// Replaces In + Out + Total Hours
+            if (isNonWorkingDay)
+              Expanded(
+                flex: 3,
+                child: Center(
+                  child: Text(
+                    isHoliday
+                        ? holidayText
+                        : attendanceStatus.trim(),
 
-                textAlign: TextAlign.center,
+                    textAlign: TextAlign.center,
 
-                style: AppTheme.textStyle(
-                  size: 14,
-
-                  weight: FontWeight.w600,
-
-                  color: statusColor,
+                    style: AppTheme.textStyle(
+                      size: 14,
+                      weight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              )
+            else ...[
+              /// IN TIME
+              Expanded(
+                child: Text(
+                  inTime,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.textStyle(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: statusColor,
+                  ),
                 ),
               ),
-            ),
 
-            /// OUT TIME
-            Expanded(
-              child: Text(
-                outTime,
-
-                textAlign: TextAlign.center,
-
-                style: AppTheme.textStyle(
-                  size: 14,
-
-                  weight: FontWeight.w600,
-
-                  color: statusColor,
+              /// OUT TIME
+              Expanded(
+                child: Text(
+                  outTime,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.textStyle(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: statusColor,
+                  ),
                 ),
               ),
-            ),
 
-            /// TOTAL HOURS
-            Expanded(
-              child: Text(
-                totalHours,
-
-                textAlign: TextAlign.center,
-
-                style: AppTheme.textStyle(
-                  size: 14,
-
-                  weight: FontWeight.w600,
-
-                  color: statusColor,
+              /// TOTAL HOURS
+              Expanded(
+                child: Text(
+                  totalHours,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.textStyle(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: statusColor,
+                  ),
                 ),
               ),
-            ),
+            ],
 
-            if(attendanceData.isApplied == 1)
+            /// APPLIED ICON
+            if (attendanceData.isApplied == 1)
               const Padding(
                 padding: EdgeInsets.only(right: 6),
+
                 child: Icon(
                   Icons.check_circle,
                   color: Colors.green,
@@ -169,23 +209,24 @@ class AttendanceListItem extends StatelessWidget {
               ),
 
             /// MORE
-            if(attendanceData.isApplied == 0)
+            if (attendanceData.isApplied == 0)
               CommonAttendanceActionMenu(
-              onRegularize: () {
-                Get.to(
-                  () => const RegularizeScreen(),
-                  binding: RegularizeBinding(),
-                  arguments: attendanceData,
-                );
-              },
-              onApplyLeave: () {
-                Get.to(
-                  () => ApplyLeaveScreen(),
-                   binding: ApplyLeaveBinding(),
-                  arguments: attendanceData,
-                );
-              },
-            ),
+                onRegularize: () {
+                  Get.to(
+                        () => const RegularizeScreen(),
+                    binding: RegularizeBinding(),
+                    arguments: attendanceData,
+                  );
+                },
+
+                onApplyLeave: () {
+                  Get.to(
+                        () => ApplyLeaveScreen(),
+                    binding: ApplyLeaveBinding(),
+                    arguments: attendanceData,
+                  );
+                },
+              ),
           ],
         ),
       ),

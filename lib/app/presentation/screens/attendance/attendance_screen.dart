@@ -175,7 +175,6 @@ class AttendanceScreen extends StatelessWidget {
                         //AppUtils.printMessage("attendanceId -- ${item.id.toString()}");
 
                         return AttendanceListItem(
-
                           date: item.attDate?.split('-').last ?? "--",
 
                           day: item.attDay?.substring(0, 3) ?? "--",
@@ -188,11 +187,15 @@ class AttendanceScreen extends StatelessWidget {
 
                           totalHours: item.totalHours ?? "-",
 
+                          attendanceStatus: item.attStatus ?? "",
+
+                          holiday: item.holiday ?? "",
+
                           statusColor: controller.getStatusColor(item.attStatus),
 
                           attendanceData: item,
                         );
-                      },
+                        },
                     ),
                   ],
 
