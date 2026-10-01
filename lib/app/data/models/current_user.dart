@@ -258,8 +258,17 @@ class Data {
     required this.updatedAt,
   });
 
+
+  bool get isInactive {
+    final value = status.trim();
+
+    return value.isNotEmpty && value != "0";
+  }
+
+  bool get isActive => !isInactive;
+
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-    id: json["id"],
+    id: safeInt(json["id"]),
     userid: safeInt(json["userid"]),
     firstName: safeString(json["first_name"]),
     lastName: safeString(json["last_name"]),

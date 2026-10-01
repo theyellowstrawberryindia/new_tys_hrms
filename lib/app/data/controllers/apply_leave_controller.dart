@@ -1,7 +1,7 @@
 /*
- *  Created by Yellow Strawberry LLP on 03/06/26, 3:26 pm
+ *  Created by Yellow Strawberry LLP on 03/06/26, 3:26 pm
  *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 03/06/26, 3:26 pm
+ *  Last modified 03/06/26, 3:26 pm
  *
  */
 
@@ -37,7 +37,7 @@ class ApplyLeaveController extends GetxController {
 
   /// LEAVE SUMMARY
 
-  int totalLeaves = 0;
+  double totalLeaves = 0;
 
   double usedLeaves = 0;
 
@@ -57,14 +57,12 @@ class ApplyLeaveController extends GetxController {
 
   AttendanceData? attendanceData;
 
-  CalendarFormat calendarFormat =
-      CalendarFormat.month;
+  CalendarFormat calendarFormat = CalendarFormat.month;
 
   @override
   void onInit() {
     super.onInit();
 
-    // final data = Get.arguments;
     attendanceData = Get.arguments as AttendanceData?;
 
     if (attendanceData != null) {
@@ -126,31 +124,37 @@ class ApplyLeaveController extends GetxController {
     Loader.showLoader();
 
     applyLeaveRepository.getLeaveStatus().then(
-      (value) {
+          (value) {
         Loader.hideLoader();
 
-        leaveStatusResponse = LeaveStatusResponse.fromJson(value);
+        try {
+          leaveStatusResponse = LeaveStatusResponse.fromJson(value);
 
-        if (leaveStatusResponse?.data?.isNotEmpty ?? false) {
-          leaveStatus = leaveStatusResponse!.data!.first;
+          if (leaveStatusResponse?.data?.isNotEmpty ?? false) {
+            leaveStatus = leaveStatusResponse!.data!.first;
 
-          totalLeaves = leaveStatus?.totalLeave ?? 0;
+            totalLeaves = leaveStatus!.totalLeaveValue;
 
-          leaveBalance = (leaveStatus?.balLeave ?? 0).toDouble();
+            /// If the backend says the balance is avail_leave, change this
+            /// one line to: leaveStatus!.availLeaveValue
+            leaveBalance = leaveStatus!.balLeaveValue;
 
-          usedLeaves = totalLeaves - leaveBalance;
+            usedLeaves = totalLeaves - leaveBalance;
 
-          if (usedLeaves < 0) {
-            usedLeaves = 0;
+            if (usedLeaves < 0) {
+              usedLeaves = 0;
+            }
+
+            casualLeaves = leaveBalance;
+
+            /// Until API provides actual value
+            sickLeaves = 6;
           }
 
-          casualLeaves = leaveBalance;
-
-          /// Until API provides actual value
-          sickLeaves = 6;
+          update();
+        } catch (e) {
+          Toast.error(message: "Unable to read leave data");
         }
-
-        update();
       },
 
       onError: (e) {
@@ -222,25 +226,25 @@ class ApplyLeaveController extends GetxController {
         .applyLeave(body)
         .then(
           (value) {
-            Loader.hideLoader();
+        Loader.hideLoader();
 
-            if (value['success'] == true) {
-              ///REFRESH ATTENDANCE LIST
-              final attendanceController = Get.find<AttendanceController>();
-              attendanceController.refreshAttendance();
+        if (value['success'] == true) {
+          ///REFRESH ATTENDANCE LIST
+          final attendanceController = Get.find<AttendanceController>();
+          attendanceController.refreshAttendance();
 
-              Get.back();
-              Toast.success(message: value['message']);
-            } else {
-              Toast.error(message: value['message']);
-            }
-          },
+          Get.back();
+          Toast.success(message: value['message']);
+        } else {
+          Toast.error(message: value['message']);
+        }
+      },
 
-          onError: (e) {
-            Loader.hideLoader();
+      onError: (e) {
+        Loader.hideLoader();
 
-            Toast.error(message: e.toString());
-          },
-        );
+        Toast.error(message: e.toString());
+      },
+    );
   }
 }

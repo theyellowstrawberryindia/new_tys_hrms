@@ -9,6 +9,12 @@ int _safeInt(dynamic v) {
   return int.tryParse(v.toString()) ?? 0;
 }
 
+double _safeDouble(dynamic v) {
+  if (v == null) return 0;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString().trim()) ?? 0;
+}
+
 DateTime? _safeDate(dynamic v) {
   if (v == null) return null;
   return DateTime.tryParse(v.toString());
@@ -45,9 +51,9 @@ class LeaveTerm {
   final DateTime? termStartDate;
   final DateTime? termEndDate;
   final String term; // e.g. "2025-2026"
-  final int prevYearBalLeave;
-  final int prevYearUsedLeave;
-  final int prevYearAssignedLeave;
+  final double prevYearBalLeave;
+  final double prevYearUsedLeave;
+  final double prevYearAssignedLeave;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -72,13 +78,12 @@ class LeaveTerm {
     termStartDate: _safeDate(json["term_start_date"]),
     termEndDate: _safeDate(json["term_end_date"]),
     term: json["term"]?.toString() ?? '',
-    prevYearBalLeave: _safeInt(json["prev_year_bal_leave"]),
-    prevYearUsedLeave: _safeInt(json["prev_year_used_leave"]),
-    prevYearAssignedLeave: _safeInt(json["prev_year_assigned_leave"]),
+    prevYearBalLeave: _safeDouble(json["prev_year_bal_leave"]),
+    prevYearUsedLeave: _safeDouble(json["prev_year_used_leave"]),
+    prevYearAssignedLeave: _safeDouble(json["prev_year_assigned_leave"]),
     createdAt: _safeDate(json["created_at"]),
     updatedAt: _safeDate(json["updated_at"]),
   );
 
   String get label => term;
-
 }

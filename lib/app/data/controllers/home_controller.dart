@@ -18,6 +18,7 @@ import '../../packages.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 
+import '../../presentation/screens/auth/auth_screen.dart';
 import '../../presentation/screens/home/attendance_camera_screen.dart';
 import '../../services/device_info_service.dart';
 import '../../services/location_service.dart';
@@ -25,6 +26,7 @@ import '../../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../services/network_service.dart';
 import '../../widgets/policy_acceptance_dialog.dart';
+import '../bindings/auth_binding.dart';
 import '../models/attendance_data.dart';
 import '../models/current_user.dart';
 import '../repository/home_repository.dart';
@@ -117,6 +119,13 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     return isCheckedIn;
   }
 
+  bool get _isUserInactive {
+    if (currentUser == null || currentUser!.data.isEmpty) return false;
+
+    return currentUser!.data.first.isInactive;
+  }
+  bool _isLoggingOut = false;
+
   String get attendanceConfirmationMessage {
     if (!isCheckedIn) {
       return "";
@@ -160,14 +169,14 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       return;
     }
 
-    await _getUser();
+    final isActive = await _getUser();
+    if (!isActive) return;
 
     /// SHOW PRIVACY POLICY GATE
     await showPolicyAcceptanceDialog();
 
     _getTodaysAttendance();
   }
-
   Future<void> loadData() async {
     if (_loaded) return;
     _loaded = true;
@@ -647,17 +656,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (image == null) {
         return;
       }
-      if (kDebugMode) {
-        await Get.dialog(
-          AlertDialog(
-            contentPadding: const EdgeInsets.all(8),
-            content: Image.file(image),
-            actions: [
-              TextButton(onPressed: Get.back, child: const Text("Upload")),
-            ],
-          ),
-        );
-      }
       Loader.showLoader();
 
       final deviceInfo = await DeviceInfoService.getDeviceData();
@@ -756,7 +754,10 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   }
 
   /// GET USER
-  Future<void> _getUser() async {
+  /// GET USER  (returns false if the user was logged out as inactive)
+  Future<bool> _getUser() async {
+    bool inactive = false;
+
     try {
       Loader.showLoader();
 
@@ -764,32 +765,44 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
       currentUser = CurrentUser.fromJson(value);
 
-      /// SET WORK LOCATION IMMEDIATELY
-      _updateEmployeeWorkLocation();
+      if (_isUserInactive) {
+        inactive = true;
+      } else {
+        /// SET WORK LOCATION IMMEDIATELY
+        _updateEmployeeWorkLocation();
 
-      await AppStorage.instance.setUserData(currentUser!);
+        await AppStorage.instance.setUserData(currentUser!);
 
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().loadCurrentUser();
+        }
 
-      if (Get.isRegistered<ProfileController>()) {
-        Get.find<ProfileController>().loadCurrentUser();
+        AppUtils.printMessage(
+          "Get User - ${currentUser!.data.first.firstName}",
+        );
+
+        /// Recalculate location using current known position.
+        await _updateCurrentLocationState();
+
+        update();
+
+        /// Don't block HomeScreen for token API.
+        unawaited(_postToken());
       }
-
-      AppUtils.printMessage(
-        "Get User - ${currentUser!.data.first.firstName}",
-      );
-
-      /// Recalculate location using current known position.
-      await _updateCurrentLocationState();
-
-      update();
-
-      /// Don't block HomeScreen for token API.
-      unawaited(_postToken());
     } catch (e) {
       Toast.error(message: e.toString());
     } finally {
       Loader.hideLoader();
     }
+
+    /// Runs AFTER the loader is hidden, so the loader's Get.back()
+    /// can't pop the login screen.
+    if (inactive) {
+      await _logoutInactiveUser();
+      return false;
+    }
+
+    return true;
   }
 
   void _getTodaysAttendance() {
@@ -807,6 +820,16 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         Toast.error(message: e);
       },
     );
+  }
+  Future<void> _logoutInactiveUser() async {
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
+
+    AppStorage.instance.clearAll();
+
+    Get.offAll(() => AuthScreen(), binding: AuthBinding());
+
+    Toast.error(message: "Your account is inactive. Please contact Admin. ");
   }
 
   String getWorkedHours() {

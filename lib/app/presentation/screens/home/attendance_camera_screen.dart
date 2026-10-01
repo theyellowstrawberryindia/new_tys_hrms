@@ -11,6 +11,7 @@ import 'package:camera/camera.dart';
 
 import '../../../packages.dart';
 import '../../../widgets/image_timestamp.dart';
+import 'face_validation_service.dart';
 
 class AttendanceCameraScreen extends StatefulWidget {
   final String address;
@@ -25,6 +26,8 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
   CameraController? controller;
 
   List<CameraDescription> cameras = [];
+
+  final _faceService = FaceValidationService();
 
   bool isCameraReady = false;
 
@@ -80,6 +83,24 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
       final capturedAt = DateTime.now();
 
       final XFile image = await controller!.takePicture();
+      // final XFile image = await controller!.takePicture();
+
+      /// FACE CHECK (on the original photo, before crop/stamp)
+      final check = await _faceService.validate(File(image.path));
+
+      if (!check.isValid) {
+        Loader.hideLoader();
+
+        _isCapturing = false;
+
+        try {
+          await File(image.path).delete();
+        } catch (_) {}
+
+        Toast.error(message: check.message);
+
+        return;
+      }
 
       final File stamped = await ImageTimestamp.stamp(
         File(image.path),
@@ -88,6 +109,13 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
         viewSize: _viewSize,
         guideSide: _guideSide,
       );
+      // final File stamped = await ImageTimestamp.stamp(
+      //   File(image.path),
+      //   time: capturedAt,
+      //   address: widget.address,
+      //   viewSize: _viewSize,
+      //   guideSide: _guideSide,
+      // );
 
       /// Close the loader FIRST, otherwise Get.back() below
       /// would pop the dialog instead of this camera screen.
@@ -124,8 +152,10 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
     );
   }
 
+
   @override
   void dispose() {
+    _faceService.dispose();
     controller?.dispose();
 
     super.dispose();

@@ -1,4 +1,4 @@
 # Changelog
 
-## v4.0.2 (33)
-## Attendance check-in button with location issue fixed
+## v4.0.5 (38)
+## Reduced the Geofence to 40 meters and added face detection in the app.

@@ -7,6 +7,7 @@
 
 import '../data/bindings/leave_data_binding.dart';
 import '../data/controllers/apply_leave_controller.dart';
+import '../data/models/leave_status_response.dart';
 import '../packages.dart';
 import '../presentation/screens/attendance/leave_data_screen.dart';
 
@@ -17,6 +18,11 @@ class LeaveStatusWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// Ring fill = balance / total (0..1)
+    final double ringValue = controller.totalLeaves > 0
+        ? (controller.leaveBalance / controller.totalLeaves).clamp(0.0, 1.0)
+        : 0.0;
+
     return Column(
       children: [
         Text(
@@ -39,10 +45,7 @@ class LeaveStatusWidget extends StatelessWidget {
                 width: 220,
 
                 child: TweenAnimationBuilder<double>(
-                  tween: Tween<double>(
-                    begin: 0,
-                    end: controller.leaveBalance,
-                  ),
+                  tween: Tween<double>(begin: 0, end: ringValue),
 
                   duration: const Duration(milliseconds: 1500),
 
@@ -152,7 +155,7 @@ class LeaveStatusWidget extends StatelessWidget {
                                   children: [
                                     /// PL
                                     Text(
-                                      "${controller.casualLeaves} PL",
+                                      "${formatLeave(controller.casualLeaves)} PL",
 
                                       style: AppTheme.textStyle(
                                         size: 16,
@@ -167,7 +170,7 @@ class LeaveStatusWidget extends StatelessWidget {
 
                                     /// SL
                                     Text(
-                                      "${controller.sickLeaves} SL",
+                                      "${formatLeave(controller.sickLeaves)} SL",
 
                                       style: AppTheme.textStyle(
                                         size: 16,
@@ -229,7 +232,6 @@ class LeaveStatusWidget extends StatelessWidget {
                   },
                 ),
               ),
-
             ],
           ),
         ),
@@ -238,7 +240,7 @@ class LeaveStatusWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
 
           children: [
-            _item("Total Leaves", controller.totalLeaves.toDouble()),
+            _item("Total Leaves", controller.totalLeaves),
 
             //_item("Available Leaves", controller.availableLeaves),
 
@@ -255,7 +257,7 @@ class LeaveStatusWidget extends StatelessWidget {
         Text(title, style: AppTheme.textStyle(size: 14)),
 
         Text(
-          value.toString(),
+          formatLeave(value),
           style: AppTheme.textStyle(size: 22, weight: FontWeight.bold),
         ),
       ],
