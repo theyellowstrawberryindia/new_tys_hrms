@@ -7,6 +7,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:hrms_ys/app/core/core.dart';
 import 'package:hrms_ys/app/core/utils/app_storage.dart';
 import 'package:hrms_ys/app/data/controllers/profile_controller.dart';
@@ -607,7 +608,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       /// OFFICE EMPLOYEE LOCATION VALIDATION
       if (isOfficeEmployee && !canClockIn) {
         Toast.error(
-          message: "You must be within 50 meters of the office to check in",
+          message: "You must be within 40 meters of the office to check in",
         );
 
         return;
@@ -634,8 +635,11 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       isOpeningCamera = true;
 
       /// OPEN CAMERA IMMEDIATELY
+      // final File? image = await Get.to<File>(
+      //       () => const AttendanceCameraScreen(),
+      // );
       final File? image = await Get.to<File>(
-            () => const AttendanceCameraScreen(),
+            () => AttendanceCameraScreen(address: currentAddress),
       );
 
       isOpeningCamera = false;
@@ -643,7 +647,17 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (image == null) {
         return;
       }
-
+      if (kDebugMode) {
+        await Get.dialog(
+          AlertDialog(
+            contentPadding: const EdgeInsets.all(8),
+            content: Image.file(image),
+            actions: [
+              TextButton(onPressed: Get.back, child: const Text("Upload")),
+            ],
+          ),
+        );
+      }
       Loader.showLoader();
 
       final deviceInfo = await DeviceInfoService.getDeviceData();
@@ -725,7 +739,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       endLongitude: officeLng,
     );
 
-    isInsideOfficeRadius = distance <= 50;
+    isInsideOfficeRadius = distance <= 40;
 
     if (isOfficeEmployee) {
       officeDistance =
