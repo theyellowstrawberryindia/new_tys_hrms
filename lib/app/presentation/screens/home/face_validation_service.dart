@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -30,72 +31,96 @@ class FaceValidationService {
   );
 
   Future<FaceValidationResult> validate(File file) async {
-    final faces = await _detector.processImage(
-      InputImage.fromFilePath(file.path),
-    );
+    /// Upright copy with the EXIF rotation baked in (fixes iOS).
+    final normalized = await _normalize(file);
 
-    if (faces.isEmpty) {
-      return const FaceValidationResult.fail(
-        'No face detected. Please face the camera.',
+    try {
+      final faces = await _detector.processImage(
+        InputImage.fromFilePath(normalized.file.path),
       );
-    }
 
-    if (faces.length > 1) {
-      return const FaceValidationResult.fail(
-        'Multiple faces detected. Only you should be in the frame.',
-      );
-    }
+      final size = normalized.size;
 
-    final face = faces.first;
-    final size = await _imageSize(file);
-    final box = face.boundingBox;
+      log('Face check: ${size.width.toInt()} x ${size.height.toInt()}, '
+          'faces = ${faces.length}');
 
-    // Distance
-    final widthRatio = box.width / size.width;
-    if (widthRatio < _minFaceWidthRatio) {
-      return const FaceValidationResult.fail('Move a little closer.');
-    }
-    if (widthRatio > _maxFaceWidthRatio) {
-      return const FaceValidationResult.fail('Move a little back.');
-    }
+      if (faces.isEmpty) {
+        return const FaceValidationResult.fail(
+          'No face detected. Please face the camera.',
+        );
+      }
 
-    // Position
-    final dx = (box.center.dx / size.width - 0.5).abs();
-    final dy = (box.center.dy / size.height - 0.5).abs();
-    if (dx > _maxOffsetX || dy > _maxOffsetY) {
-      return const FaceValidationResult.fail(
-        'Keep your face inside the frame.',
-      );
-    }
+      if (faces.length > 1) {
+        return const FaceValidationResult.fail(
+          'Multiple faces detected. Only you should be in the frame.',
+        );
+      }
 
-    // Head pose
-    final turn = face.headEulerAngleY?.abs() ?? 0;
-    final tilt = face.headEulerAngleZ?.abs() ?? 0;
-    if (turn > _maxHeadTurn || tilt > _maxHeadTilt) {
-      return const FaceValidationResult.fail(
-        'Look straight at the camera.',
-      );
-    }
+      final face = faces.first;
+      final box = face.boundingBox;
 
-    // Eyes
-    final left = face.leftEyeOpenProbability;
-    final right = face.rightEyeOpenProbability;
-    if (left != null &&
-        right != null &&
-        (left < _minEyeOpen || right < _minEyeOpen)) {
-      return const FaceValidationResult.fail('Please keep your eyes open.');
-    }
+      // Distance
+      final widthRatio = box.width / size.width;
+      if (widthRatio < _minFaceWidthRatio) {
+        return const FaceValidationResult.fail('Move a little closer.');
+      }
+      if (widthRatio > _maxFaceWidthRatio) {
+        return const FaceValidationResult.fail('Move a little back.');
+      }
 
-    return const FaceValidationResult.ok();
+      // Position
+      final dx = (box.center.dx / size.width - 0.5).abs();
+      final dy = (box.center.dy / size.height - 0.5).abs();
+      if (dx > _maxOffsetX || dy > _maxOffsetY) {
+        return const FaceValidationResult.fail(
+          'Keep your face inside the frame.',
+        );
+      }
+
+      // Head pose
+      final turn = face.headEulerAngleY?.abs() ?? 0;
+      final tilt = face.headEulerAngleZ?.abs() ?? 0;
+      if (turn > _maxHeadTurn || tilt > _maxHeadTilt) {
+        return const FaceValidationResult.fail(
+          'Look straight at the camera.',
+        );
+      }
+
+      // Eyes
+      final left = face.leftEyeOpenProbability;
+      final right = face.rightEyeOpenProbability;
+      if (left != null &&
+          right != null &&
+          (left < _minEyeOpen || right < _minEyeOpen)) {
+        return const FaceValidationResult.fail('Please keep your eyes open.');
+      }
+
+      return const FaceValidationResult.ok();
+    } finally {
+      try {
+        await normalized.file.delete();
+      } catch (_) {}
+    }
   }
 
-  Future<ui.Size> _imageSize(File file) async {
+  /// Decodes (Flutter applies the EXIF rotation) and re-saves as an upright
+  /// PNG with no EXIF, so ML Kit sees the same orientation on iOS and Android.
+  Future<({File file, ui.Size size})> _normalize(File file) async {
     final codec = await ui.instantiateImageCodec(await file.readAsBytes());
     final image = (await codec.getNextFrame()).image;
+
     final size = ui.Size(image.width.toDouble(), image.height.toDouble());
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+
     image.dispose();
     codec.dispose();
-    return size;
+
+    final out = File(
+      '${file.parent.path}/face_check_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
+    await out.writeAsBytes(data!.buffer.asUint8List(), flush: true);
+
+    return (file: out, size: size);
   }
 
   Future<void> dispose() => _detector.close();
