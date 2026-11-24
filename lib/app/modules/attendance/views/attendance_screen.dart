@@ -63,6 +63,7 @@ class AttendanceScreen extends StatelessWidget {
             onRefresh: controller.refreshAttendance,
 
             child: SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
               physics: const AlwaysScrollableScrollPhysics(),
 
               child: Column(

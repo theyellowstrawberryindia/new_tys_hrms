@@ -22,7 +22,7 @@ class ProfileScreen extends GetView<ProfileController> {
       body: GetBuilder<ProfileController>(
         builder: (controller) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
 
             child: Column(
               children: [

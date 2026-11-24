@@ -7,7 +7,6 @@
 
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:hrms_ys/app/core/core.dart';
 import 'package:hrms_ys/app/core/utils/app_storage.dart';
 import 'package:hrms_ys/app/modules/profile/controllers/profile_controller.dart';
@@ -19,6 +18,7 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 
 import '../../auth/views/auth_screen.dart';
+import '../../attendance/services/office_geofence.dart';
 import '../../attendance/views/attendance_camera_screen.dart';
 import '../../../core/services/device_info_service.dart';
 import '../../../core/services/location_service.dart';
@@ -42,12 +42,18 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   /// LOCATION
   String officeDistance = "Getting Location...";
   String currentAddress = "";
+  LocationAccessStatus? locationSettingsTarget;
+  OfficeLocationStatus? lastOfficeLocationStatus;
+  bool isVerifyingOfficeLocation = false;
+  late final AppLifecycleListener _locationLifecycleListener;
+  bool _refreshLocationAfterSettings = false;
 
   Position? currentPosition;
 
   /// OFFICE LOCATION
   final double officeLat = 19.0667379;
   final double officeLng = 73.0082772;
+  static const double officeRadius = 40;
 
   /// OFFICE STATUS
   bool isInsideOfficeRadius = false;
@@ -151,6 +157,13 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
     _startClock();
 
+    _locationLifecycleListener = AppLifecycleListener(
+      onResume: () {
+        if (!_refreshLocationAfterSettings || isClosed) return;
+        _refreshLocationAfterSettings = false;
+        unawaited(startLocationListener(requestPermission: false));
+      },
+    );
     startLocationListener();
 
     _initAnimations();
@@ -354,14 +367,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     buttonPressController.reverse();
   }
 
-  Color get locationColor {
-    if (attendanceButtonText == "Check In") {
-      return AppColor.kPrimaryColor;
-    }
-
-    return isLateCheckIn ? AppColor.kPrimaryColor : AppColor.kSuccessColor;
-  }
-
   /// CLOCK
   void _startClock() {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -536,58 +541,143 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   }
 
   /// START LOCATION LISTENER
-  Future<void> startLocationListener() async {
+  Future<void> startLocationListener({bool requestPermission = true}) async {
     try {
-      final hasPermission =
-      await LocationService.handlePermission();
+      await positionStream?.cancel();
+      if (isClosed) return;
 
-      if (!hasPermission) {
-        officeDistance = "Location permission denied";
-
-        update();
-
+      final access = await LocationService.checkAccess(
+        requestPermission: requestPermission,
+        requirePrecise: isOfficeEmployee,
+      );
+      if (isClosed) return;
+      if (access != LocationAccessStatus.granted) {
+        _locationUnavailable(access.message, settingsTarget: access);
         return;
       }
 
-      /// IMPORTANT:
-      /// Prevent multiple subscriptions when pull-to-refresh is used.
-      await positionStream?.cancel();
+      if (locationSettingsTarget != null) {
+        locationSettingsTarget = null;
+        lastOfficeLocationStatus = null;
+        officeDistance = "Getting location…";
+        update();
+      }
 
-      positionStream =
-          LocationService.getPositionStream().listen(
-                (Position position) async {
-              currentPosition = position;
-
-              currentAddress =
-              await LocationService.getAddressFromLatLng(
-                latitude: position.latitude,
-                longitude: position.longitude,
-              );
-
-              /// If user hasn't loaded yet, don't mark them Remote.
-              if (!isUserLoaded) {
-                officeDistance = "Checking Work Location...";
-
-                canClockIn = false;
-
-                update();
-
-                return;
-              }
-
-              await _updateCurrentLocationState();
-            },
-            onError: (error) {
-              officeDistance = "Unable to fetch location";
-
-              update();
-            },
-          );
-    } catch (e) {
-      officeDistance = "Unable to fetch location";
-
-      update();
+      positionStream = LocationService.getPositionStream().listen(
+        (position) {
+          if (currentPosition?.timestamp.isAfter(position.timestamp) ?? false) {
+            return;
+          }
+          currentPosition = position;
+          _updateCurrentLocationState();
+          unawaited(_updateDisplayedAddress(position));
+        },
+        onError: (_) {
+          _locationUnavailable("Unable to fetch location. Try again.");
+        },
+      );
+    } catch (_) {
+      _locationUnavailable("Unable to fetch location. Try again.");
     }
+  }
+
+  void _locationUnavailable(
+    String message, {
+    LocationAccessStatus? settingsTarget,
+  }) {
+    if (isClosed) return;
+    locationSettingsTarget = settingsTarget;
+    lastOfficeLocationStatus = null;
+    currentPosition = null;
+    currentAddress = "";
+    isInsideOfficeRadius = false;
+    canClockIn = false;
+    officeDistance = message;
+    update();
+  }
+
+  Future<void> openAttendanceLocationSettings() async {
+    final target = locationSettingsTarget;
+    if (target == null || _refreshLocationAfterSettings) return;
+    _refreshLocationAfterSettings = true;
+    try {
+      if (await target.openSettings()) return;
+    } catch (_) {
+      // Some devices do not expose a settings screen to apps.
+    }
+    _refreshLocationAfterSettings = false;
+    if (!isClosed) {
+      Toast.error(message: "Couldn’t open Settings. ${target.message}");
+    }
+  }
+
+  Future<Position?> _verifyOfficePosition() async {
+    const uncertainMessage = "We couldn’t verify your location accurately. "
+        "Enable Precise Location and try again.";
+    final access = await LocationService.checkAccess(requirePrecise: true);
+    if (isClosed) return null;
+    if (access != LocationAccessStatus.granted) {
+      _locationUnavailable(access.message, settingsTarget: access);
+      Toast.error(message: access.message);
+      return null;
+    }
+
+    locationSettingsTarget = null;
+    officeDistance = "Verifying office location…";
+    isVerifyingOfficeLocation = true;
+    update();
+    final Position? position;
+    try {
+      position = await LocationService.getAttendancePosition(
+        isUsable: (position) =>
+            _assessOfficePosition(position) != OfficeLocationStatus.uncertain,
+      );
+    } catch (_) {
+      _locationUnavailable("Unable to verify your location. Try again.");
+      rethrow;
+    } finally {
+      isVerifyingOfficeLocation = false;
+      if (!isClosed) update();
+    }
+    if (isClosed) return null;
+    if (position == null) {
+      _locationUnavailable(uncertainMessage);
+      Toast.error(message: uncertainMessage);
+      return null;
+    }
+
+    currentPosition = position;
+    final status = _assessOfficePosition(position);
+    AppUtils.printMessage(
+      "Office location: distance ${_distanceFromOffice(position).toStringAsFixed(0)} m, "
+      "reported accuracy ${position.accuracy} m, "
+      "fix age ${DateTime.now().difference(position.timestamp).inSeconds} s, "
+      "${status.name}",
+    );
+    _updateCurrentLocationState();
+    if (status == OfficeLocationStatus.inside) return position;
+
+    final failure = status == OfficeLocationStatus.outside
+        ? "You’re outside the office area. "
+              "Move within ${officeRadius.round()} m and try again."
+        : uncertainMessage;
+    Toast.error(message: failure);
+    return null;
+  }
+
+  Future<String> _addressFor(Position? position) async {
+    if (position == null) return "";
+    return LocationService.getAddressFromLatLng(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    ).timeout(const Duration(seconds: 2), onTimeout: () => "Location unavailable");
+  }
+
+  Future<void> _updateDisplayedAddress(Position position) async {
+    final address = await _addressFor(position);
+    if (isClosed || !identical(currentPosition, position)) return;
+    currentAddress = address;
+    update();
   }
 
   /// CREATE ATTENDANCE
@@ -597,31 +687,20 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       return;
     }
 
+    isOpeningCamera = true;
+    var showingLoader = false;
     try {
-      /// USER MUST BE AVAILABLE FIRST
-      if (currentUser == null || currentUser!.data.isEmpty) {
+      final user = currentUser?.data.firstOrNull;
+      if (user == null) {
         Toast.error(message: "User information is loading. Please try again.");
-
         return;
       }
 
-      /// LOCATION MUST BE AVAILABLE FOR OFFICE EMPLOYEE
-      if (isOfficeEmployee && currentPosition == null) {
-        Toast.error(
-          message: "Getting your current location. Please try again.",
-        );
-
-        return;
-      }
-
-      /// OFFICE EMPLOYEE LOCATION VALIDATION
-      if (isOfficeEmployee && !canClockIn) {
-        Toast.error(
-          message: "You must be within 40 meters of the office to check in",
-        );
-
-        return;
-      }
+      final requiresOfficeLocation = isOfficeEmployee;
+      final cameraPosition = requiresOfficeLocation
+          ? await _verifyOfficePosition()
+          : currentPosition;
+      if (isClosed || (requiresOfficeLocation && cameraPosition == null)) return;
 
       /// CHECK-OUT CONFIRMATION
       if (shouldShowCheckoutConfirmation) {
@@ -641,30 +720,41 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         }
       }
 
-      isOpeningCamera = true;
-
-      /// OPEN CAMERA IMMEDIATELY
-      // final File? image = await Get.to<File>(
-      //       () => const AttendanceCameraScreen(),
-      // );
-      final File? image = await Get.to<File>(
-            () => AttendanceCameraScreen(address: currentAddress),
+      if (isClosed) return;
+      final cameraAddress = await _addressFor(cameraPosition);
+      if (isClosed) return;
+      if (identical(currentPosition, cameraPosition)) {
+        currentAddress = cameraAddress;
+      }
+      final image = await Get.to<File>(
+        () => AttendanceCameraScreen(address: cameraAddress),
       );
+      if (image == null || isClosed) return;
 
-      isOpeningCamera = false;
-
-      if (image == null) {
+      final attendancePosition = requiresOfficeLocation
+          ? await _verifyOfficePosition()
+          : currentPosition;
+      if (isClosed || (requiresOfficeLocation && attendancePosition == null)) {
         return;
       }
+      final attendanceAddress = identical(cameraPosition, attendancePosition)
+          ? cameraAddress
+          : await _addressFor(attendancePosition);
+      if (isClosed) return;
+      if (identical(currentPosition, attendancePosition)) {
+        currentAddress = attendanceAddress;
+      }
+
       Loader.showLoader();
+      showingLoader = true;
 
       final deviceInfo = await DeviceInfoService.getDeviceData();
 
       final Map<String, String> body = {
-        "email": currentUser!.data.first.email,
-        "current_address": currentAddress,
-        "latitude": "${currentPosition?.latitude ?? ""}",
-        "longitude": "${currentPosition?.longitude ?? ""}",
+        "email": user.email,
+        "current_address": attendanceAddress,
+        "latitude": "${attendancePosition?.latitude ?? ""}",
+        "longitude": "${attendancePosition?.longitude ?? ""}",
         "device_os": deviceInfo["device_os"] ?? "",
         "device_name": deviceInfo["device_name"] ?? "",
         "ip_address": "",
@@ -673,6 +763,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       final response = await homeRepository.createAttendance(body, image);
 
       Loader.hideLoader();
+      showingLoader = false;
+      if (isClosed) return;
 
       updateAttendanceUI(response);
 
@@ -691,11 +783,14 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         message: response["message"] ?? "Attendance marked successfully",
       );
     } catch (e) {
+      if (showingLoader) Loader.hideLoader();
+      if (!isClosed) {
+        Toast.error(message: showingLoader
+            ? e.toString()
+            : "Unable to verify attendance right now. Please try again.");
+      }
+    } finally {
       isOpeningCamera = false;
-
-      Loader.hideLoader();
-
-      Toast.error(message: e.toString());
     }
   }
 
@@ -710,7 +805,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     isUserLoaded = true;
 
     final workLocation =
-        currentUser!.data.first.workLocation?.trim().toLowerCase() ?? "";
+        currentUser!.data.first.workLocation.trim().toLowerCase();
 
     _isOfficeEmployee = workLocation == "office";
 
@@ -723,33 +818,46 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     );
   }
 
-  Future<void> _updateCurrentLocationState() async {
-    final position = currentPosition;
-
-    if (position == null) {
-      return;
+  OfficeLocationStatus _assessOfficePosition(Position position) {
+    if (!LocationService.isRecentAttendanceFix(position, DateTime.now())) {
+      return OfficeLocationStatus.uncertain;
     }
-
-    final distance = LocationService.calculateDistance(
-      startLatitude: position.latitude,
-      startLongitude: position.longitude,
-      endLatitude: officeLat,
-      endLongitude: officeLng,
+    return assessOfficeLocation(
+      distance: _distanceFromOffice(position),
+      horizontalAccuracy: position.accuracy,
+      radius: officeRadius,
     );
+  }
 
-    isInsideOfficeRadius = distance <= 40;
+  double _distanceFromOffice(Position position) =>
+      LocationService.calculateDistance(
+        startLatitude: position.latitude,
+        startLongitude: position.longitude,
+        endLatitude: officeLat,
+        endLongitude: officeLng,
+      );
 
-    if (isOfficeEmployee) {
-      officeDistance =
-      "You are ${distance.toStringAsFixed(1)} meter away from office";
+  void _updateCurrentLocationState() {
+    if (isClosed || locationSettingsTarget != null) return;
+    final position = currentPosition;
+    final status = position == null
+        ? OfficeLocationStatus.uncertain
+        : _assessOfficePosition(position);
+    lastOfficeLocationStatus = isOfficeEmployee ? status : null;
+    isInsideOfficeRadius = isOfficeEmployee && status == OfficeLocationStatus.inside;
+    canClockIn = isUserLoaded && (!isOfficeEmployee || isInsideOfficeRadius);
 
-      canClockIn = isInsideOfficeRadius;
+    if (!isUserLoaded) {
+      officeDistance = "Checking work location…";
+    } else if (!isOfficeEmployee) {
+      officeDistance = "Remote working location";
     } else {
-      officeDistance = "Remote Working Location";
-
-      canClockIn = true;
+      officeDistance = switch (status) {
+        OfficeLocationStatus.inside => "Within the office area",
+        OfficeLocationStatus.outside => "Outside the office area",
+        OfficeLocationStatus.uncertain => "Office location not verified",
+      };
     }
-
     update();
   }
 
@@ -782,7 +890,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         );
 
         /// Recalculate location using current known position.
-        await _updateCurrentLocationState();
+        _updateCurrentLocationState();
 
         update();
 
@@ -894,6 +1002,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
+    _locationLifecycleListener.dispose();
     timer?.cancel();
 
     positionStream?.cancel();

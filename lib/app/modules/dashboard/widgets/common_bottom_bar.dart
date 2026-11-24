@@ -1,82 +1,114 @@
-/*
- *  Created by Yellow Strawberry LLP on 25/05/26, 2:34 pm
- *  Copyright (c) 2026 . All rights reserved.
- *  Last modified 25/05/26, 2:34 pm
- *
- */
+import 'dart:ui' show ImageFilter;
 
-import '../controllers/dashboard_controller.dart';
 import '../../../shared/packages.dart';
 import '../../../shared/widgets/common_svg_icon.dart';
+import '../controllers/dashboard_controller.dart';
 
 class CommonBottomBar extends StatelessWidget {
-  const CommonBottomBar({super.key});
+  const CommonBottomBar({super.key, this.compact = false});
+
+  static const _duration = Duration(milliseconds: 230);
+  static const _curve = Curves.easeOutCubic;
+  static const _shape = BorderRadius.all(Radius.circular(26));
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final surface = theme.colorScheme.surface;
 
     return GetBuilder<DashboardController>(
       builder: (controller) {
-        return Container(
-          color: theme.bottomNavigationBarTheme.backgroundColor,
-
-          child: SafeArea(
-            top: false,
-
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-
+        return SafeArea(
+          top: false,
+          child: AnimatedPadding(
+            duration: _duration,
+            curve: _curve,
+            padding: EdgeInsets.fromLTRB(
+              compact ? 24 : 14,
+              0,
+              compact ? 24 : 14,
+              8,
+            ),
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: theme.bottomNavigationBarTheme.backgroundColor,
-
+                borderRadius: _shape,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-
-                    blurRadius: 8,
-                    spreadRadius: -2,
-                    offset: const Offset(0, -2),
+                    color: Colors.black.withValues(alpha: dark ? .30 : .12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 7),
                   ),
                 ],
               ),
-
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-                children: [
-                  _navItem(
-                    context: context,
-                    iconPath: AssetPath.homeIcon,
-                    label: "Home",
-                    index: 0,
-                    controller: controller,
+              child: ClipRRect(
+                borderRadius: _shape,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        borderRadius: _shape,
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: dark ? .24 : .20,
+                          ),
+                        ),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            surface.withValues(alpha: dark ? .80 : .78),
+                            surface.withValues(alpha: .92),
+                          ],
+                        ),
+                      ),
+                      child: AnimatedPadding(
+                        duration: _duration,
+                        curve: _curve,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: compact ? 2 : 6,
+                        ),
+                        child: Row(
+                          children: [
+                            _navItem(
+                              context,
+                              controller,
+                              AssetPath.homeIcon,
+                              'Home',
+                              0,
+                            ),
+                            _navItem(
+                              context,
+                              controller,
+                              AssetPath.attendanceIcon,
+                              'Attendance',
+                              1,
+                            ),
+                            _navItem(
+                              context,
+                              controller,
+                              AssetPath.notificationIcon,
+                              'Notification',
+                              2,
+                            ),
+                            _navItem(
+                              context,
+                              controller,
+                              AssetPath.personIcon,
+                              'Profile',
+                              3,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-
-                  _navItem(
-                    context: context,
-                    iconPath: AssetPath.attendanceIcon,
-                    label: "Attendance",
-                    index: 1,
-                    controller: controller,
-                  ),
-
-                  _navItem(
-                    context: context,
-                    iconPath: AssetPath.notificationIcon,
-                    label: "Notification",
-                    index: 2,
-                    controller: controller,
-                  ),
-
-                  _navItem(
-                    context: context,
-                    iconPath: AssetPath.personIcon,
-                    label: "Profile",
-                    index: 3,
-                    controller: controller,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -85,157 +117,95 @@ class CommonBottomBar extends StatelessWidget {
     );
   }
 
-  Widget _navItem({
-    required BuildContext context,
-    required String iconPath,
-    required String label,
-    required int index,
-    required DashboardController controller,
-  }) {
-
-    final theme = Theme.of(context);
-
-    final bool isSelected = controller.selectedIndex == index;
+  Widget _navItem(
+    BuildContext context,
+    DashboardController controller,
+    String iconPath,
+    String label,
+    int index,
+  ) {
+    final navTheme = Theme.of(context).bottomNavigationBarTheme;
+    final selected = controller.selectedIndex == index;
+    final color = selected
+        ? navTheme.selectedItemColor ?? AppTheme.iconColor(context)
+        : navTheme.unselectedItemColor ?? AppColor.kGrayTextColor;
 
     return Expanded(
-
-      child: InkWell(
-
-        borderRadius: BorderRadius.circular(30),
-
-        onTap: () {
-          controller.changeTab(index);
-        },
-
-        child: Column(
-
-          mainAxisSize: MainAxisSize.min,
-
-          children: [
-
-            SizedBox(
-
-              height: 42,
-
-              child: Stack(
-
-                alignment: Alignment.center,
-
-                children: [
-
-                  AnimatedBuilder(
-
+      child: Semantics(
+        selected: selected,
+        child: InkWell(
+          borderRadius: const BorderRadius.all(Radius.circular(22)),
+          onTap: () => controller.changeTab(index),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: _duration,
+                  curve: _curve,
+                  height: compact ? 29 : 36,
+                  alignment: Alignment.center,
+                  child: AnimatedBuilder(
                     animation: controller.navAnimationController,
-
-                    builder: (_, __) {
-
-                      final selected =
-                          controller.selectedIndex == index;
-
-                      final width =
-                      selected
-                          ? (controller.animatingIndex == index
-                          ? controller.pillWidthAnimation.value
-                          : 54.0)
-                          : 0.0;
-
-                      return AnimatedContainer(
-
-                        duration:
-                        const Duration(milliseconds: 220),
-
-                        curve: Curves.easeOut,
-
-                        width: width,
-
-                        height: 34,
-
-                        decoration: BoxDecoration(
-
-                          color: AppColor.kPrimaryColor
-                              .withValues(alpha: .12),
-
-                          borderRadius:
-                          BorderRadius.circular(20),
-                        ),
-                      );
-                    },
-                  ),
-
-                  AnimatedBuilder(
-
-                    animation: controller.iconScaleAnimation,
-
-                    builder: (_, child) {
-
-                      final animate =
-                          controller.animatingIndex == index;
-
-                      final scale =
-                      animate
-                          ? controller.iconScaleAnimation.value
-                          : 1.0;
-
-                      final lift =
-                      animate
-                          ? -(scale - 1) * 18
-                          : 0.0;
-
-                      return Transform.translate(
-
-                        offset: Offset(0, lift),
-
-                        child: Transform.scale(
-                          scale: scale,
-                          child: child,
-                        ),
-                      );
-                    },
-
                     child: CommonSvgIcon(
-
                       asset: iconPath,
-
-                      size: 26,
-
-                      color: isSelected
-                          ? theme
-                          .bottomNavigationBarTheme
-                          .selectedItemColor
-                          : theme
-                          .bottomNavigationBarTheme
-                          .unselectedItemColor,
+                      size: compact ? 21 : 24,
+                      color: color,
                     ),
+                    builder: (context, child) {
+                      final animating = controller.animatingIndex == index;
+                      final pillWidth = compact ? 44.0 : 54.0;
+                      final progress = animating
+                          ? controller.pillWidthAnimation.value / 54
+                          : 1.0;
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedContainer(
+                            duration: _duration,
+                            curve: _curve,
+                            width: selected ? pillWidth * progress : 0,
+                            height: compact ? 27 : 33,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: .16),
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(18),
+                              ),
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: animating
+                                ? controller.iconScaleAnimation.value
+                                : 1,
+                            child: child,
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+                AnimatedDefaultTextStyle(
+                  duration: _duration,
+                  curve: _curve,
+                  style: AppTheme.textStyle(
+                    context: context,
+                    size: compact ? 9 : 10,
+                    weight: FontWeight.w600,
+                    color: color,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 6),
-
-            AnimatedDefaultTextStyle(
-
-              duration:
-              const Duration(milliseconds: 220),
-
-              curve: Curves.easeOut,
-
-              style: AppTheme.textStyle(
-
-                size: 10,
-
-                weight: isSelected
-                    ? FontWeight.w700
-                    : FontWeight.w500,
-
-                color: isSelected
-                    ? theme.bottomNavigationBarTheme.selectedItemColor
-                    : theme.bottomNavigationBarTheme.unselectedItemColor,
-              ),
-
-              child: Text(label),
-            ),
-          ],
+          ),
         ),
       ),
     );

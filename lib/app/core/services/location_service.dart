@@ -5,33 +5,93 @@
  *
  */
 
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
+enum LocationAccessStatus {
+  granted,
+  servicesDisabled,
+  permissionDenied,
+  reducedAccuracy;
+
+  String get message => switch (this) {
+    servicesDisabled => "Turn on Location Services in Settings.",
+    permissionDenied => "Allow location access in Settings.",
+    reducedAccuracy => "Enable Precise Location in Settings.",
+    granted => "",
+  };
+
+  Future<bool> openSettings() => switch (this) {
+    servicesDisabled => Geolocator.openLocationSettings(),
+    permissionDenied || reducedAccuracy => Geolocator.openAppSettings(),
+    granted => Future.value(false),
+  };
+}
+
 class LocationService {
-  /// HANDLE PERMISSION
-  static Future<bool> handlePermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  static const attendanceFixMaxAge = Duration(seconds: 15);
 
-    if (!serviceEnabled) {
-      return false;
-    }
+  static bool isRecentAttendanceFix(Position position, DateTime now) {
+    final age = now.difference(position.timestamp);
+    return !age.isNegative && age <= attendanceFixMaxAge;
+  }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-
-      if (permission == LocationPermission.denied) {
-        return false;
+  static Future<Position?> getAttendancePosition({
+    required bool Function(Position) isUsable,
+  }) async {
+    const timeLimit = Duration(seconds: 8);
+    final elapsed = Stopwatch()..start();
+    Position? lastRecentPosition;
+    while (true) {
+      final timeRemaining = timeLimit - elapsed.elapsed;
+      if (timeRemaining <= Duration.zero) break;
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best,
+          timeLimit: timeRemaining,
+        );
+        if (isRecentAttendanceFix(position, DateTime.now())) {
+          lastRecentPosition = position;
+          if (isUsable(position)) return position;
+        }
+      } on TimeoutException {
+        break;
+      }
+      final remaining = timeLimit - elapsed.elapsed;
+      const retryDelay = Duration(milliseconds: 500);
+      if (remaining > Duration.zero) {
+        await Future<void>.delayed(
+          remaining < retryDelay ? remaining : retryDelay,
+        );
       }
     }
+    return lastRecentPosition;
+  }
 
-    if (permission == LocationPermission.deniedForever) {
-      return false;
+  static Future<LocationAccessStatus> checkAccess({
+    bool requestPermission = true,
+    bool requirePrecise = false,
+  }) async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      return LocationAccessStatus.servicesDisabled;
     }
 
-    return true;
+    var permission = await Geolocator.checkPermission();
+    if (requestPermission && permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission != LocationPermission.whileInUse &&
+        permission != LocationPermission.always) {
+      return LocationAccessStatus.permissionDenied;
+    }
+    if (requirePrecise &&
+        await Geolocator.getLocationAccuracy() ==
+            LocationAccuracyStatus.reduced) {
+      return LocationAccessStatus.reducedAccuracy;
+    }
+    return LocationAccessStatus.granted;
   }
 
   /// LOCATION STREAM

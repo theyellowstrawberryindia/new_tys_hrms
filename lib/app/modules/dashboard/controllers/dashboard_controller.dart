@@ -58,10 +58,9 @@ class DashboardController extends GetxController
     if (selectedIndex == index) return;
 
     animatingIndex = index;
-
-    navAnimationController.forward(from: 0);
-
     selectedIndex = index;
+    navAnimationController.forward(from: 0);
+    update();
 
     switch (index) {
 
@@ -82,18 +81,6 @@ class DashboardController extends GetxController
         break;
     }
 
-
-    Future.delayed(
-      const Duration(milliseconds: 250),
-          () {
-
-        animatingIndex = -1;
-
-        navAnimationController.reset();
-
-        update();
-      },
-    );
 
   }
 
@@ -120,15 +107,18 @@ class DashboardController extends GetxController
       duration: const Duration(milliseconds: 260),
     );
 
-    iconScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.12,
-    ).animate(
-      CurvedAnimation(
-        parent: navAnimationController,
-        curve: Curves.easeOutBack,
+    iconScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 1.12)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 45,
       ),
-    );
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.12, end: 1)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 55,
+      ),
+    ]).animate(navAnimationController);
 
     pillWidthAnimation = Tween<double>(
       begin: 0,

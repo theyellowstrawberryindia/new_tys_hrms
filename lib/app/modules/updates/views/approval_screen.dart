@@ -24,7 +24,7 @@ class ApprovalScreen extends GetView<UpdateController> {
           onRefresh: controller.refreshUpdates,
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: EdgeInsets.fromLTRB(20, 10, 20, 10 + MediaQuery.paddingOf(context).bottom),
             itemCount: controller.approvalList.length,
             separatorBuilder: (_, __) =>
                 Divider(color: AppColor.kBorderColor, height: 1),

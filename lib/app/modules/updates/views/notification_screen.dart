@@ -28,7 +28,7 @@ class NotificationScreen extends GetView<UpdateController> {
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
 
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.paddingOf(context).bottom),
 
             itemCount: controller.notificationList.length,
 
