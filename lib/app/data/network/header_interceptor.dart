@@ -9,9 +9,9 @@ import 'dart:io';
 
 // Package imports:
 import 'package:dio/dio.dart';
-import 'package:hrms_ys/app/data/bindings/auth_binding.dart';
-import 'package:hrms_ys/app/packages.dart';
-import 'package:hrms_ys/app/presentation/screens/auth/auth_screen.dart';
+import 'package:hrms_ys/app/modules/auth/bindings/auth_binding.dart';
+import 'package:get/get.dart' hide FormData;
+import 'package:hrms_ys/app/modules/auth/views/auth_screen.dart';
 
 import '../../core/utils/app_storage.dart';
 
@@ -24,9 +24,9 @@ class HeaderInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final head = _headers;
+    if (options.data is FormData) head.remove(HttpHeaders.contentTypeHeader);
     options.headers.addAll(head);
     log("REQUEST URL: ${options.uri}");
-    log("TOKEN: ${options.headers[HttpHeaders.authorizationHeader]}");
     super.onRequest(options, handler);
   }
 

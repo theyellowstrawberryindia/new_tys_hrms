@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:hrms_ys/app/packages.dart';
-import 'package:hrms_ys/app/presentation/screens/splash/splash_screen.dart';
+import 'package:hrms_ys/app/shared/packages.dart';
+import 'package:hrms_ys/app/modules/splash/views/splash_screen.dart';
 import 'app/core/configs/app_configs.dart';
-import 'app/firebase/firebase_message.dart';
-import 'app/firebase/firebase_options.dart';
-import 'app/services/notification_service.dart';
+import 'app/core/firebase/firebase_message.dart';
+import 'app/core/firebase/firebase_options.dart';
+import 'app/core/services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
 
 

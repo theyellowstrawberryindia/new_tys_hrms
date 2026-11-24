@@ -19,10 +19,11 @@ enum HttpMethod{post,put,get,delete}
 
 class ApiClient {
 
-  final _dio = Dio();
+  final Dio _dio;
 
+  ApiClient.withDio(this._dio);
 
-  ApiClient._() {
+  ApiClient._() : _dio = Dio() {
     _dio.interceptors.add(HeaderInterceptor());
     if (kDebugMode) {
       _dio.interceptors.add(LoggingInterceptor());
@@ -95,12 +96,13 @@ class ApiClient {
   ///   - An error if the network request fails or if JSON encoding of the [body] fails.
   ///   - The error message from the server response if available.
   ///   - A generic error for other error scenarios.
-  Future<dynamic> post(String endpoint, dynamic body,) async {
+  Future<dynamic> post(String endpoint, dynamic body, {bool preserveErrors = false}) async {
     try {
       _dio.options = _baseOptions;
       final response = await _dio.post(endpoint, data: jsonEncode(body));
       return response.data;
     } catch (e) {
+      if (preserveErrors && e is DioException) rethrow;
       return _handleError(e);
     }
   }
@@ -121,12 +123,13 @@ class ApiClient {
   ///   - An error if the network request fails or if JSON encoding of the [body] fails.
   ///   - The error message from the server response if available.
   ///   - A generic error for other error scenarios.
-  Future<dynamic> put(String endpoint, dynamic body,) async {
+  Future<dynamic> put(String endpoint, dynamic body, {bool preserveErrors = false}) async {
     try {
       _dio.options = _baseOptions;
       final response = await _dio.put(endpoint, data: jsonEncode(body));
       return response.data;
     } catch (e) {
+      if (preserveErrors && e is DioException) rethrow;
       return _handleError(e);
     }
   }
@@ -178,6 +181,7 @@ class ApiClient {
     Map<String, String> body = const {},
     Map<String, String> files = const {},
     HttpMethod httpMethod = HttpMethod.post, File? file,
+    bool sensitive = false,
   }) async {
     try {
       Map<String, dynamic> request = {};
@@ -192,15 +196,7 @@ class ApiClient {
           );
         }
       }
-      log("REQUEST MAP => $request");
       var form = FormData.fromMap(request);
-      for (final field in form.fields) {
-        log("FIELD => ${field.key} = ${field.value}");
-      }
-
-      for (final file in form.files) {
-        log("FILE => ${file.key} = ${file.value.filename}");
-      }
       _dio.options = _baseOptions;
 
       var method = 'POST';
@@ -208,9 +204,18 @@ class ApiClient {
         method = 'PUT';
       }
 
-      final response = await _dio.request(endpoint, data: form,options: Options(method: method));
+      final response = await _dio.request(
+        endpoint,
+        data: form,
+        options: Options(
+          method: method,
+          contentType: Headers.multipartFormDataContentType,
+          extra: {'sensitive': sensitive},
+        ),
+      );
       return response.data;
     } catch (e) {
+      if (sensitive && e is DioException) rethrow;
       return _handleError(e);
     }
   }
