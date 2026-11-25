@@ -9,19 +9,28 @@ class AttendanceLocationCard extends StatelessWidget {
     required this.message,
     required this.address,
     required this.status,
+    this.officeRadius,
+    this.reading,
     this.isChecking = false,
     this.onOpenSettings,
+    this.onRefreshLocation,
   });
 
   final String message;
   final String address;
   final OfficeLocationStatus? status;
+  final double? officeRadius;
+  final ({double distance, bool recent})? reading;
   final bool isChecking;
   final VoidCallback? onOpenSettings;
+  final VoidCallback? onRefreshLocation;
 
   @override
   Widget build(BuildContext context) {
     final needsSettings = onOpenSettings != null;
+    final locationAction = onOpenSettings ?? onRefreshLocation;
+    final radius = officeRadius;
+    final estimate = reading;
     final primaryIconColor = AppTheme.iconColor(context);
     final (icon, iconColor) = switch (status) {
       _ when needsSettings => (
@@ -84,6 +93,42 @@ class AttendanceLocationCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (radius != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Office radius: ${radius.round()} m',
+                textAlign: TextAlign.center,
+                style: AppTheme.textStyle(
+                  context: context,
+                  size: 12,
+                  weight: FontWeight.w600,
+                ),
+              ),
+              if (!needsSettings && !isChecking && estimate != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  "${estimate.recent ? 'Distance from office' : 'Last distance from office'}: "
+                  "${estimate.distance.round()} m",
+                  textAlign: TextAlign.center,
+                  style: AppTheme.textStyle(context: context, size: 12),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: 160,
+                  child: ExcludeSemantics(
+                    child: LinearProgressIndicator(
+                      value: (estimate.distance / radius).clamp(0.0, 1.0),
+                      minHeight: 4,
+                      borderRadius: BorderRadius.circular(4),
+                      color: estimate.recent
+                          ? iconColor
+                          : AppColor.kGrayTextColor,
+                      backgroundColor: primaryIconColor.withValues(alpha: .15),
+                    ),
+                  ),
+                ),
+              ],
+            ],
             if (!needsSettings && !isChecking && address.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
@@ -96,10 +141,10 @@ class AttendanceLocationCard extends StatelessWidget {
                 ),
               ),
             ],
-            if (needsSettings) ...[
+            if (!isChecking && locationAction != null) ...[
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: onOpenSettings,
+                onPressed: locationAction,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: primaryIconColor,
                   side: const BorderSide(
@@ -114,8 +159,8 @@ class AttendanceLocationCard extends StatelessWidget {
                     color: primaryIconColor,
                   ),
                 ),
-                child: const Text(
-                  'Open Location Settings',
+                child: Text(
+                  needsSettings ? 'Open Location Settings' : 'Current Location',
                   textAlign: TextAlign.center,
                 ),
               ),

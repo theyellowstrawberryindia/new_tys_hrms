@@ -29,17 +29,8 @@ class DashboardController extends GetxController
     with GetTickerProviderStateMixin {
   int selectedIndex = 0;
 
-  /// Bottom Navigation Animation
-  ///
-
-  late AnimationController navAnimationController;
-
-  late Animation<double> iconScaleAnimation;
-
-  late Animation<double> pillWidthAnimation;
-
-  int animatingIndex = -1;
-
+  late final AnimationController navAnimationController;
+  double selectedIconSlideOffset = 0;
 
   final List<Widget> screens = [
     const HomeScreen(),
@@ -49,21 +40,17 @@ class DashboardController extends GetxController
     const UpdateScreen(),
 
     const ProfileScreen(),
-
-
   ];
 
   Future<void> changeTab(int index) async {
-
     if (selectedIndex == index) return;
 
-    animatingIndex = index;
+    selectedIconSlideOffset = index > selectedIndex ? -.20 : .20;
     selectedIndex = index;
     navAnimationController.forward(from: 0);
     update();
 
     switch (index) {
-
       case 0:
         Get.find<HomeController>().loadData();
         break;
@@ -80,10 +67,7 @@ class DashboardController extends GetxController
         Get.find<ProfileController>().loadData();
         break;
     }
-
-
   }
-
 
   @override
   void onInit() {
@@ -101,33 +85,10 @@ class DashboardController extends GetxController
   }
 
   void _initBottomAnimation() {
-
     navAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 260),
-    );
-
-    iconScaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1, end: 1.12)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 45,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.12, end: 1)
-            .chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 55,
-      ),
-    ]).animate(navAnimationController);
-
-    pillWidthAnimation = Tween<double>(
-      begin: 0,
-      end: 54,
-    ).animate(
-      CurvedAnimation(
-        parent: navAnimationController,
-        curve: Curves.easeOutCubic,
-      ),
+      value: 1,
+      duration: const Duration(milliseconds: 340),
     );
   }
 

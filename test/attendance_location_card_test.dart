@@ -93,12 +93,61 @@ void main() {
         message: 'Within the office area',
         address: 'Example office address',
         status: OfficeLocationStatus.inside,
+        officeRadius: 40,
+        reading: (distance: 35, recent: true),
       ),
     );
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('Within the office area'), findsOneWidget);
     expect(find.text('Example office address'), findsOneWidget);
+    expect(find.text('Office radius: 40 m'), findsOneWidget);
+    expect(find.text('Distance from office: 35 m'), findsOneWidget);
+    expect(
+      tester
+          .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
+          .value,
+      closeTo(.875, .001),
+    );
     expect(find.text('Open Location Settings'), findsNothing);
+  });
+
+  testWidgets('outside the office can refresh and shows the updated distance', (
+    tester,
+  ) async {
+    Future<void> showCard(AttendanceLocationCard card) => tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: card),
+      ),
+    );
+    var refreshed = false;
+    await showCard(
+      AttendanceLocationCard(
+        message: 'Outside the office area',
+        address: '',
+        status: OfficeLocationStatus.outside,
+        officeRadius: 40,
+        reading: (distance: 72, recent: true),
+        onRefreshLocation: () => refreshed = true,
+      ),
+    );
+    expect(find.text('Distance from office: 72 m'), findsOneWidget);
+    await tester.tap(find.text('Current Location'));
+    expect(refreshed, isTrue);
+
+    await showCard(
+      const AttendanceLocationCard(
+        message: 'Within the office area',
+        address: '',
+        status: OfficeLocationStatus.inside,
+        officeRadius: 40,
+        reading: (distance: 28, recent: true),
+      ),
+    );
+    expect(find.text('Office radius: 40 m'), findsOneWidget);
+    expect(find.text('Distance from office: 28 m'), findsOneWidget);
+    expect(find.text('Distance from office: 72 m'), findsNothing);
+    expect(find.text('Current Location'), findsNothing);
   });
 }

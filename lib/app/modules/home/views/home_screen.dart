@@ -9,6 +9,7 @@ import 'package:hrms_ys/app/shared/widgets/common_svg_icon.dart';
 
 import '../../../shared/packages.dart';
 
+import '../../attendance/services/office_geofence.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/attendance_location_card.dart';
 import '../widgets/home_attendance_card.dart';
@@ -208,11 +209,21 @@ class HomeScreen extends GetView<HomeController> {
                         message: controller.officeDistance,
                         address: controller.currentAddress,
                         status: controller.lastOfficeLocationStatus,
+                        officeRadius: controller.isOfficeEmployee
+                            ? HomeController.officeRadius
+                            : null,
+                        reading: controller.officeLocationReading,
                         isChecking: controller.isVerifyingOfficeLocation,
                         onOpenSettings:
                             controller.locationSettingsTarget == null
                             ? null
                             : controller.openAttendanceLocationSettings,
+                        onRefreshLocation:
+                            controller.isOfficeEmployee &&
+                                controller.lastOfficeLocationStatus !=
+                                    OfficeLocationStatus.inside
+                            ? controller.refreshOfficeLocation
+                            : null,
                       ),
 
                       const SizedBox(height: 24),

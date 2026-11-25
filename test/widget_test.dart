@@ -277,15 +277,11 @@ void main() {
   testWidgets('Education opens an empty draft and shows inline validation', (
     tester,
   ) async {
-    await tester.runAsync(
-      () => AppStorage.instance.setUserData(
-        CurrentUser.fromJson({
-          'data': [
-            {'userid': 42},
-          ],
-        }),
-      ),
-    );
+    GetStorage(AppConfig.appStorageName).writeInMemory(StorageKey.userData, {
+      'data': [
+        {'userid': 42},
+      ],
+    });
     final controller = Get.put(EducationDetailsController());
     await tester.pumpWidget(
       const GetMaterialApp(home: EducationDetailsScreen()),

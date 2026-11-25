@@ -611,58 +611,72 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  Future<Position?> _verifyOfficePosition() async {
-    const uncertainMessage = "We couldn’t verify your location accurately. "
-        "Enable Precise Location and try again.";
-    final access = await LocationService.checkAccess(requirePrecise: true);
-    if (isClosed) return null;
-    if (access != LocationAccessStatus.granted) {
-      _locationUnavailable(access.message, settingsTarget: access);
-      Toast.error(message: access.message);
-      return null;
-    }
+  Future<void> refreshOfficeLocation() async {
+    if (!isOfficeEmployee || isOpeningCamera) return;
+    await _verifyOfficePosition(showMessage: false);
+  }
 
-    locationSettingsTarget = null;
-    officeDistance = "Verifying office location…";
+  Future<Position?> _verifyOfficePosition({bool showMessage = true}) async {
+    if (isVerifyingOfficeLocation || isClosed) return null;
     isVerifyingOfficeLocation = true;
     update();
-    final Position? position;
+
     try {
-      position = await LocationService.getAttendancePosition(
+      final access = await LocationService.checkAccess(requirePrecise: true);
+      if (isClosed) return null;
+      if (access != LocationAccessStatus.granted) {
+        _locationUnavailable(access.message, settingsTarget: access);
+        if (showMessage) Toast.error(message: access.message);
+        return null;
+      }
+
+      locationSettingsTarget = null;
+      officeDistance = "Verifying office location…";
+      update();
+
+      final position = await LocationService.getAttendancePosition(
         isUsable: (position) =>
             _assessOfficePosition(position) != OfficeLocationStatus.uncertain,
       );
+      if (isClosed) return null;
+      if (position == null) {
+        const message = "No recent location was available. Try again.";
+        _locationUnavailable(message);
+        if (showMessage) Toast.error(message: message);
+        return null;
+      }
+
+      final status = _assessOfficePosition(position);
+      AppUtils.printMessage(
+        "Office location: distance ${_distanceFromOffice(position).toStringAsFixed(0)} m, "
+        "reported accuracy ${position.accuracy} m, "
+        "fix age ${DateTime.now().difference(position.timestamp).inSeconds} s, "
+        "${status.name}",
+      );
+      if (!(currentPosition?.timestamp.isAfter(position.timestamp) ?? false)) {
+        currentPosition = position;
+        unawaited(_updateDisplayedAddress(position));
+      }
+      _updateCurrentLocationState();
+      if (status == OfficeLocationStatus.inside) return position;
+
+      if (showMessage) {
+        final failure = status == OfficeLocationStatus.outside
+            ? "You’re outside the office area. "
+                  "Move within ${officeRadius.round()} m and try again."
+            : _uncertainOfficeLocationMessage(position);
+        Toast.error(message: failure);
+      }
+      return null;
     } catch (_) {
-      _locationUnavailable("Unable to verify your location. Try again.");
-      rethrow;
+      const message = "Unable to verify your location. Try again.";
+      _locationUnavailable(message);
+      if (showMessage && !isClosed) Toast.error(message: message);
+      return null;
     } finally {
       isVerifyingOfficeLocation = false;
       if (!isClosed) update();
     }
-    if (isClosed) return null;
-    if (position == null) {
-      _locationUnavailable(uncertainMessage);
-      Toast.error(message: uncertainMessage);
-      return null;
-    }
-
-    currentPosition = position;
-    final status = _assessOfficePosition(position);
-    AppUtils.printMessage(
-      "Office location: distance ${_distanceFromOffice(position).toStringAsFixed(0)} m, "
-      "reported accuracy ${position.accuracy} m, "
-      "fix age ${DateTime.now().difference(position.timestamp).inSeconds} s, "
-      "${status.name}",
-    );
-    _updateCurrentLocationState();
-    if (status == OfficeLocationStatus.inside) return position;
-
-    final failure = status == OfficeLocationStatus.outside
-        ? "You’re outside the office area. "
-              "Move within ${officeRadius.round()} m and try again."
-        : uncertainMessage;
-    Toast.error(message: failure);
-    return null;
   }
 
   Future<String> _addressFor(Position? position) async {
@@ -683,7 +697,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   /// CREATE ATTENDANCE
 
   Future<void> createAttendance() async {
-    if (isOpeningCamera) {
+    if (isOpeningCamera || isVerifyingOfficeLocation) {
       return;
     }
 
@@ -837,6 +851,30 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         endLongitude: officeLng,
       );
 
+  String _uncertainOfficeLocationMessage(Position? position) {
+    if (position == null ||
+        !LocationService.isRecentAttendanceFix(position, DateTime.now())) {
+      return "Waiting for a recent location";
+    }
+    if (position.accuracy > 0 &&
+        position.accuracy <= officeRadius &&
+        _distanceFromOffice(position) > officeRadius) {
+      return "Near the office boundary. Move closer and try again.";
+    }
+    return "Location accuracy is too low. Try again near an entrance or window.";
+  }
+
+  ({double distance, bool recent})? get officeLocationReading {
+    final position = currentPosition;
+    if (!isOfficeEmployee || position == null) return null;
+    final distance = _distanceFromOffice(position);
+    if (!distance.isFinite) return null;
+    return (
+      distance: distance,
+      recent: LocationService.isRecentAttendanceFix(position, DateTime.now()),
+    );
+  }
+
   void _updateCurrentLocationState() {
     if (isClosed || locationSettingsTarget != null) return;
     final position = currentPosition;
@@ -855,7 +893,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       officeDistance = switch (status) {
         OfficeLocationStatus.inside => "Within the office area",
         OfficeLocationStatus.outside => "Outside the office area",
-        OfficeLocationStatus.uncertain => "Office location not verified",
+        OfficeLocationStatus.uncertain => _uncertainOfficeLocationMessage(position),
       };
     }
     update();

@@ -13,7 +13,9 @@ OfficeLocationStatus assessOfficeLocation({
     return OfficeLocationStatus.uncertain;
   }
 
-  if (distance + horizontalAccuracy <= radius) {
+  // Apply the radius to the measured position. Accuracy is a quality
+  // estimate and should not reduce the configured office radius.
+  if (distance <= radius) {
     return OfficeLocationStatus.inside;
   }
   if (distance - horizontalAccuracy > radius) {

@@ -43,7 +43,7 @@ class LocationService {
   }) async {
     const timeLimit = Duration(seconds: 8);
     final elapsed = Stopwatch()..start();
-    Position? lastRecentPosition;
+    Position? bestRecentPosition;
     while (true) {
       final timeRemaining = timeLimit - elapsed.elapsed;
       if (timeRemaining <= Duration.zero) break;
@@ -53,8 +53,17 @@ class LocationService {
           timeLimit: timeRemaining,
         );
         if (isRecentAttendanceFix(position, DateTime.now())) {
-          lastRecentPosition = position;
           if (isUsable(position)) return position;
+          final best = bestRecentPosition;
+          if (best == null ||
+              !isRecentAttendanceFix(best, DateTime.now()) ||
+              (position.accuracy.isFinite &&
+                  position.accuracy > 0 &&
+                  (!best.accuracy.isFinite ||
+                      best.accuracy <= 0 ||
+                      position.accuracy <= best.accuracy))) {
+            bestRecentPosition = position;
+          }
         }
       } on TimeoutException {
         break;
@@ -67,7 +76,7 @@ class LocationService {
         );
       }
     }
-    return lastRecentPosition;
+    return bestRecentPosition;
   }
 
   static Future<LocationAccessStatus> checkAccess({

@@ -13,6 +13,30 @@ class CommonBottomBar extends StatelessWidget {
 
   final bool compact;
 
+  Animation<Offset> _selectionSlide(DashboardController controller) {
+    final start = Offset(controller.selectedIconSlideOffset, 0);
+    final overshoot = start * -.2;
+
+    return controller.navAnimationController.drive(
+      TweenSequence<Offset>([
+        TweenSequenceItem(
+          tween: Tween(
+            begin: start,
+            end: overshoot,
+          ).chain(CurveTween(curve: Curves.easeOutCubic)),
+          weight: 72,
+        ),
+        TweenSequenceItem(
+          tween: Tween(
+            begin: overshoot,
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeInOutSine)),
+          weight: 28,
+        ),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -130,11 +154,24 @@ class CommonBottomBar extends StatelessWidget {
         ? navTheme.selectedItemColor ?? AppTheme.iconColor(context)
         : navTheme.unselectedItemColor ?? AppColor.kGrayTextColor;
 
+    final icon = CommonSvgIcon(
+      asset: iconPath,
+      size: compact ? 21 : 24,
+      color: color,
+    );
+
     return Expanded(
       child: Semantics(
         selected: selected,
         child: InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(22)),
+          splashFactory: NoSplash.splashFactory,
+          highlightColor: Colors.transparent,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: .12)
+                : Colors.transparent,
+          ),
           onTap: () => controller.changeTab(index),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
@@ -147,27 +184,11 @@ class CommonBottomBar extends StatelessWidget {
                   curve: _curve,
                   height: compact ? 29 : 36,
                   alignment: Alignment.center,
-                  child: AnimatedBuilder(
-                    animation: controller.navAnimationController,
-                    child: CommonSvgIcon(
-                      asset: iconPath,
-                      size: compact ? 21 : 24,
-                      color: color,
-                    ),
-                    builder: (context, child) {
-                      final animating = controller.animatingIndex == index;
-                      final pillWidth = compact ? 44.0 : 54.0;
-                      final progress = animating
-                          ? controller.pillWidthAnimation.value / 54
-                          : 1.0;
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          AnimatedContainer(
-                            duration: _duration,
-                            curve: _curve,
-                            width: selected ? pillWidth * progress : 0,
-                            height: compact ? 27 : 33,
+                  child: selected
+                      ? SlideTransition(
+                          position: _selectionSlide(controller),
+                          transformHitTests: false,
+                          child: DecoratedBox(
                             decoration: BoxDecoration(
                               color: Theme.of(
                                 context,
@@ -176,31 +197,25 @@ class CommonBottomBar extends StatelessWidget {
                                 Radius.circular(18),
                               ),
                             ),
+                            child: SizedBox(
+                              width: compact ? 44 : 54,
+                              height: compact ? 27 : 33,
+                              child: Center(child: icon),
+                            ),
                           ),
-                          Transform.scale(
-                            scale: animating
-                                ? controller.iconScaleAnimation.value
-                                : 1,
-                            child: child,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                        )
+                      : icon,
                 ),
-                AnimatedDefaultTextStyle(
-                  duration: _duration,
-                  curve: _curve,
+                Text(
+                  label,
+                  key: ValueKey(selected),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTheme.textStyle(
                     context: context,
                     size: compact ? 9 : 10,
                     weight: FontWeight.w600,
                     color: color,
-                  ),
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

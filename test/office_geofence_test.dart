@@ -91,9 +91,11 @@ void main() {
         radius: 40,
       );
 
-  test('allows a fix whose uncertainty fits within the office radius', () {
+  test('allows a usable fix within the full configured radius', () {
     expect(assess(12, 5), OfficeLocationStatus.inside);
     expect(assess(30, 10), OfficeLocationStatus.inside);
+    expect(assess(35, 10), OfficeLocationStatus.inside);
+    expect(assess(40, 20), OfficeLocationStatus.inside);
   });
 
   test(
@@ -106,7 +108,6 @@ void main() {
   );
 
   test('treats boundary overlaps and invalid accuracy as uncertain', () {
-    expect(assess(35, 10), OfficeLocationStatus.uncertain);
     expect(assess(45, 10), OfficeLocationStatus.uncertain);
     expect(assess(10, 0), OfficeLocationStatus.uncertain);
     expect(assess(20, double.nan), OfficeLocationStatus.uncertain);
