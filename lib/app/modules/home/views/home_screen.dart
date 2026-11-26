@@ -31,10 +31,7 @@ class HomeScreen extends GetView<HomeController> {
 
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-              onRefresh: () async {
-                await controller.startLocationListener();
-                await controller.refreshHome();
-              },
+              onRefresh: controller.refreshHome,
 
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

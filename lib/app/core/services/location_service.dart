@@ -39,7 +39,7 @@ class LocationService {
   }
 
   static Future<Position?> getAttendancePosition({
-    required bool Function(Position) isUsable,
+    required bool Function(Position) isInside,
   }) async {
     const timeLimit = Duration(seconds: 8);
     final elapsed = Stopwatch()..start();
@@ -53,7 +53,8 @@ class LocationService {
           timeLimit: timeRemaining,
         );
         if (isRecentAttendanceFix(position, DateTime.now())) {
-          if (isUsable(position)) return position;
+          // Indoor fixes can drift before accuracy stabilizes.
+          if (isInside(position)) return position;
           final best = bestRecentPosition;
           if (best == null ||
               !isRecentAttendanceFix(best, DateTime.now()) ||
@@ -76,7 +77,10 @@ class LocationService {
         );
       }
     }
-    return bestRecentPosition;
+    final best = bestRecentPosition;
+    return best != null && isRecentAttendanceFix(best, DateTime.now())
+        ? best
+        : null;
   }
 
   static Future<LocationAccessStatus> checkAccess({

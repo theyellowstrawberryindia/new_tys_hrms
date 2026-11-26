@@ -29,6 +29,7 @@ import '../../profile/widgets/policy_acceptance_dialog.dart';
 import '../../auth/bindings/auth_binding.dart';
 import '../../attendance/data/models/attendance_data.dart';
 import '../../../data/models/current_user.dart';
+import '../data/models/office_location.dart';
 import '../data/repositories/home_repository.dart';
 import '../../profile/controllers/privacy_policy_controller.dart';
 
@@ -51,8 +52,9 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   Position? currentPosition;
 
   /// OFFICE LOCATION
-  final double officeLat = 19.0667379;
-  final double officeLng = 73.0082772;
+  OfficeLocation? _officeLocation;
+  Future<void>? _officeRequest;
+  bool _isLoadingOfficeLocation = false;
   static const double officeRadius = 40;
 
   /// OFFICE STATUS
@@ -183,7 +185,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     }
 
     final isActive = await _getUser();
-    if (!isActive) return;
+    if (!isActive || isClosed) return;
+    if (isOfficeEmployee) unawaited(_loadOfficeLocation());
 
     /// SHOW PRIVACY POLICY GATE
     await showPolicyAcceptanceDialog();
@@ -249,11 +252,30 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       return;
     }
 
-    await positionStream?.cancel();
-
     await startLocationListener();
 
-    await _getUser();
+    if (await _getUser() && isOfficeEmployee && !isClosed) {
+      await _loadOfficeLocation();
+    }
+  }
+
+  Future<void> _loadOfficeLocation() =>
+      _officeRequest ??= _fetchOfficeLocation();
+
+  Future<void> _fetchOfficeLocation() async {
+    _isLoadingOfficeLocation = true;
+    _updateCurrentLocationState();
+    try {
+      final office = await homeRepository.getOffice();
+      if (!isClosed) _officeLocation = office;
+    } catch (_) {
+      // Keep the last valid location until the server can be reached again.
+      AppUtils.printMessage("Could not fetch office location");
+    } finally {
+      _isLoadingOfficeLocation = false;
+      _officeRequest = null;
+      _updateCurrentLocationState();
+    }
   }
 
   void _initAnimations() {
@@ -622,6 +644,13 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     update();
 
     try {
+      if (_officeLocation == null) await _loadOfficeLocation();
+      if (isClosed) return null;
+      if (_officeLocation == null) {
+        if (showMessage) Toast.error(message: "Office location is unavailable. Try again.");
+        return null;
+      }
+
       final access = await LocationService.checkAccess(requirePrecise: true);
       if (isClosed) return null;
       if (access != LocationAccessStatus.granted) {
@@ -635,8 +664,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       update();
 
       final position = await LocationService.getAttendancePosition(
-        isUsable: (position) =>
-            _assessOfficePosition(position) != OfficeLocationStatus.uncertain,
+        isInside: (position) =>
+            _assessOfficePosition(position) == OfficeLocationStatus.inside,
       );
       if (isClosed) return null;
       if (position == null) {
@@ -648,7 +677,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
       final status = _assessOfficePosition(position);
       AppUtils.printMessage(
-        "Office location: distance ${_distanceFromOffice(position).toStringAsFixed(0)} m, "
+        "Office location: distance ${_distanceFromOffice(position, _officeLocation!).toStringAsFixed(0)} m, "
         "reported accuracy ${position.accuracy} m, "
         "fix age ${DateTime.now().difference(position.timestamp).inSeconds} s, "
         "${status.name}",
@@ -833,22 +862,24 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   }
 
   OfficeLocationStatus _assessOfficePosition(Position position) {
-    if (!LocationService.isRecentAttendanceFix(position, DateTime.now())) {
+    final office = _officeLocation;
+    if (office == null ||
+        !LocationService.isRecentAttendanceFix(position, DateTime.now())) {
       return OfficeLocationStatus.uncertain;
     }
     return assessOfficeLocation(
-      distance: _distanceFromOffice(position),
+      distance: _distanceFromOffice(position, office),
       horizontalAccuracy: position.accuracy,
       radius: officeRadius,
     );
   }
 
-  double _distanceFromOffice(Position position) =>
+  double _distanceFromOffice(Position position, OfficeLocation office) =>
       LocationService.calculateDistance(
         startLatitude: position.latitude,
         startLongitude: position.longitude,
-        endLatitude: officeLat,
-        endLongitude: officeLng,
+        endLatitude: office.latitude,
+        endLongitude: office.longitude,
       );
 
   String _uncertainOfficeLocationMessage(Position? position) {
@@ -856,9 +887,11 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         !LocationService.isRecentAttendanceFix(position, DateTime.now())) {
       return "Waiting for a recent location";
     }
-    if (position.accuracy > 0 &&
+    final office = _officeLocation;
+    if (office != null &&
+        position.accuracy > 0 &&
         position.accuracy <= officeRadius &&
-        _distanceFromOffice(position) > officeRadius) {
+        _distanceFromOffice(position, office) > officeRadius) {
       return "Near the office boundary. Move closer and try again.";
     }
     return "Location accuracy is too low. Try again near an entrance or window.";
@@ -866,8 +899,9 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   ({double distance, bool recent})? get officeLocationReading {
     final position = currentPosition;
-    if (!isOfficeEmployee || position == null) return null;
-    final distance = _distanceFromOffice(position);
+    final office = _officeLocation;
+    if (!isOfficeEmployee || position == null || office == null) return null;
+    final distance = _distanceFromOffice(position, office);
     if (!distance.isFinite) return null;
     return (
       distance: distance,
@@ -889,6 +923,10 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       officeDistance = "Checking work location…";
     } else if (!isOfficeEmployee) {
       officeDistance = "Remote working location";
+    } else if (_officeLocation == null) {
+      officeDistance = _isLoadingOfficeLocation
+          ? "Loading office location…"
+          : "Office location is unavailable. Try again.";
     } else {
       officeDistance = switch (status) {
         OfficeLocationStatus.inside => "Within the office area",

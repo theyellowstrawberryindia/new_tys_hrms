@@ -8,39 +8,50 @@
 import 'dart:io';
 import '../../../../data/network/api_client.dart';
 import '../../../../data/network/api_endpoints.dart';
+import '../models/office_location.dart';
 
 class HomeRepository {
+  HomeRepository({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient.client;
 
+  final ApiClient _apiClient;
+
+  Future<OfficeLocation> getOffice() async {
+    final response = await _apiClient
+        .get(APIEndpoints.getOffice)
+        .timeout(const Duration(seconds: 10));
+    return OfficeLocation.fromResponse(response);
+  }
 
   /// GET USER
   Future<dynamic> getUser() async {
     try {
-      final response = await ApiClient.client.get(APIEndpoints.getUser);
+      final response = await _apiClient.get(APIEndpoints.getUser);
       return response;
     } catch (e) {
       return Future.error(e);
     }
   }
-
 
   ///Create Attendance
   Future<dynamic> createAttendance(Map<String, String> body, File? file) async {
     try {
-      Map<String, String> files = {
-        "photo":file?.path ?? "",
-      };
-      final response = await ApiClient.client.multipart(APIEndpoints.userAttendance, body: body, files: files);
+      Map<String, String> files = {"photo": file?.path ?? ""};
+      final response = await _apiClient.multipart(
+        APIEndpoints.userAttendance,
+        body: body,
+        files: files,
+      );
       return response;
     } catch (e) {
       return Future.error(e);
     }
   }
 
-
   /// GET USER
   Future<dynamic> getTodaysAttendance() async {
     try {
-      final response = await ApiClient.client.get(APIEndpoints.getTodaysAttendance);
+      final response = await _apiClient.get(APIEndpoints.getTodaysAttendance);
       return response;
     } catch (e) {
       return Future.error(e);
@@ -50,12 +61,10 @@ class HomeRepository {
   ///Post token
   Future<dynamic> postToken(Map<String, String> body) async {
     try {
-      final response = await ApiClient.client.post(APIEndpoints.postToken, body);
+      final response = await _apiClient.post(APIEndpoints.postToken, body);
       return response;
     } catch (e) {
       return Future.error(e);
     }
   }
-
-
 }

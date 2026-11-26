@@ -19,6 +19,8 @@ class APIEndpoints{
   static const String userAttendance = "$baseUrl/user-attendance";
   static const String getTodaysAttendance = "$baseUrl/getTodaysAttendance";
 
+  static const String getOffice = "$baseUrl/get-office";
+
   ///GET ATTENDANCE
   static const String getAttendance = "$baseUrl/get-attendance";
 

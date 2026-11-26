@@ -91,6 +91,40 @@ void main() {
         radius: 40,
       );
 
+  test('attendance keeps sampling after an initial outside fix', () async {
+    var requests = 0;
+    messenger.setMockMethodCallHandler(locationChannel, (call) async {
+      expect(call.method, 'getCurrentPosition');
+      requests++;
+      return {
+        'latitude': requests == 1 ? 19.0675 : 19.0667374,
+        'longitude': 73.0082586,
+        'accuracy': 10.0,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(locationChannel, null),
+    );
+
+    final fix = await LocationService.getAttendancePosition(
+      isInside: (position) =>
+          assess(
+            LocationService.calculateDistance(
+              startLatitude: position.latitude,
+              startLongitude: position.longitude,
+              endLatitude: 19.0667374,
+              endLongitude: 73.0082586,
+            ),
+            position.accuracy,
+          ) ==
+          OfficeLocationStatus.inside,
+    );
+
+    expect(requests, 2);
+    expect(fix?.latitude, 19.0667374);
+  });
+
   test('allows a usable fix within the full configured radius', () {
     expect(assess(12, 5), OfficeLocationStatus.inside);
     expect(assess(30, 10), OfficeLocationStatus.inside);
